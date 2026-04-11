@@ -5,16 +5,32 @@ export async function GET(req: NextRequest) {
   if (!token) return NextResponse.json({ valid: false, error: "Token manquant" }, { status: 400 });
 
   try {
-    const res = await fetch(
-      `https://graph.facebook.com/me?fields=name,id&access_token=${encodeURIComponent(token)}`
+    // Instagram User Access Tokens (from User Token Generator) → Instagram Graph API
+    const igRes = await fetch(
+      `https://graph.instagram.com/me?fields=id,username,name&access_token=${encodeURIComponent(token)}`
     );
-    const data = await res.json();
+    const igData = await igRes.json();
 
-    if (data.error) {
-      return NextResponse.json({ valid: false, error: data.error.message });
+    if (!igData.error) {
+      return NextResponse.json({
+        valid: true,
+        name: igData.username ?? igData.name ?? igData.id,
+        id: igData.id,
+      });
     }
 
-    return NextResponse.json({ valid: true, name: data.name, id: data.id });
+    // Fallback: Facebook Page Access Token → Facebook Graph API
+    const fbRes = await fetch(
+      `https://graph.facebook.com/me?fields=name,id&access_token=${encodeURIComponent(token)}`
+    );
+    const fbData = await fbRes.json();
+
+    if (!fbData.error) {
+      return NextResponse.json({ valid: true, name: fbData.name, id: fbData.id });
+    }
+
+    // Both failed — return the Instagram error message
+    return NextResponse.json({ valid: false, error: igData.error?.message ?? fbData.error?.message });
   } catch {
     return NextResponse.json({ valid: false, error: "Impossible de contacter Meta" }, { status: 500 });
   }

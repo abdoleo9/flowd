@@ -664,7 +664,7 @@ function WizardModal({
                 placeholder="123456789012"
                 className="w-full bg-background border border-border rounded-lg px-3.5 py-2.5 text-sm text-white placeholder:text-muted outline-none focus:border-accent transition-colors font-mono"
               />
-              <p className="text-xs text-muted-foreground mt-1.5">Instagram → API Setup → section <strong className="text-white/60">User Token Generator</strong> — le Page ID s&apos;affiche à côté de votre compte</p>
+              <p className="text-xs text-muted-foreground mt-1.5">C&apos;est l&apos;<strong className="text-white/60">Instagram Account ID</strong> — il s&apos;affiche sous votre nom dans la section User Token Generator, ou dans <strong className="text-white/60">Instagram → API Setup</strong></p>
             </div>
           </>)}
 

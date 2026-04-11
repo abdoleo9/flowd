@@ -498,7 +498,7 @@ function WizardModal({
           {isWebhookStep ? (
             <Button onClick={onClose}><Check size={13} /> Terminer</Button>
           ) : isTokenStep ? (
-            <Button loading={saving} disabled={!canSave} onClick={handleSaveAndNext}>
+            <Button loading={saving} disabled={saving} onClick={handleSaveAndNext}>
               {saving ? "Enregistrement…" : <>Enregistrer et continuer <ArrowRight size={13} /></>}
             </Button>
           ) : (
@@ -1021,31 +1021,38 @@ export default function IntegrationsPage() {
   }
 
   async function handleSave(def: IntegrationDef, credentials: Record<string, string>) {
-    if (!activeWorkspace) return;
-    const existing = getIntegration(def.type);
-    const payload = {
-      workspace_id: activeWorkspace.id,
-      type: def.type,
-      label: def.name,
-      credentials,
-      is_active: true,
-    };
-
-    let error;
-    if (existing) {
-      ({ error } = await supabase.from("integrations").update(payload).eq("id", existing.id));
-    } else {
-      ({ error } = await supabase.from("integrations").insert(payload));
-    }
-
-    if (error) {
-      toast.error(`Erreur : ${error.message}`);
+    if (!activeWorkspace) {
+      toast.error("Aucun workspace actif — rechargez la page et réessayez.");
       return;
     }
+    try {
+      const existing = getIntegration(def.type);
+      const payload = {
+        workspace_id: activeWorkspace.id,
+        type: def.type,
+        label: def.name,
+        credentials,
+        is_active: true,
+      };
 
-    toast.success(`${def.name} connecté avec succès`);
-    setOpenDef(null);
-    fetchIntegrations();
+      let error;
+      if (existing) {
+        ({ error } = await supabase.from("integrations").update(payload).eq("id", existing.id));
+      } else {
+        ({ error } = await supabase.from("integrations").insert(payload));
+      }
+
+      if (error) {
+        toast.error(`Erreur DB : ${error.message} (code: ${error.code})`);
+        return;
+      }
+
+      toast.success(`${def.name} connecté avec succès !`);
+      setOpenDef(null);
+      await fetchIntegrations();
+    } catch (err) {
+      toast.error(`Erreur inattendue : ${String(err)}`);
+    }
   }
 
   async function handleDisconnect(type: IntegrationType) {

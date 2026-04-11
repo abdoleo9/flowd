@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
-import { genAI, detectLanguage, buildSystemPrompt } from "@/lib/claude";
+import { groq, GROQ_MODEL, detectLanguage, buildSystemPrompt } from "@/lib/groq";
 import { getActiveWorkspaceId } from "@/lib/active-workspace";
 
 export const runtime = "nodejs";
@@ -67,38 +67,41 @@ export async function POST(request: NextRequest) {
 
   const systemPrompt = buildSystemPrompt(chatbotConfig, language);
 
-  // Build Gemini chat history (role must be "user" or "model")
-  const chatHistory = (history ?? [])
-    .filter((m: { role: string; content: string }) => m.role !== "system")
-    .map((m: { role: string; content: string }) => ({
-      role: m.role === "assistant" ? "model" : "user",
-      parts: [{ text: m.content }],
-    }));
+  // Build messages for Groq (OpenAI-compatible)
+  const messages: { role: "system" | "user" | "assistant"; content: string }[] = [
+    { role: "system", content: systemPrompt },
+    ...(history ?? [])
+      .filter((m: { role: string }) => m.role !== "system")
+      .map((m: { role: string; content: string }) => ({
+        role: (m.role === "assistant" ? "assistant" : "user") as "user" | "assistant",
+        content: m.content,
+      })),
+    { role: "user", content },
+  ];
 
-  // Stream Gemini response
+  // Stream Groq response
   const encoder = new TextEncoder();
   let fullResponse = "";
 
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        const model = genAI.getGenerativeModel({
-          model: "gemini-2.0-flash",
-          systemInstruction: systemPrompt,
+        const groqStream = await groq.chat.completions.create({
+          model: GROQ_MODEL,
+          messages,
+          max_tokens: 500,
+          temperature: 0.7,
+          stream: true,
         });
 
-        const chat = model.startChat({ history: chatHistory });
-        const result = await chat.sendMessageStream(content);
-
-        for await (const chunk of result.stream) {
-          const text = chunk.text();
+        for await (const chunk of groqStream) {
+          const text = chunk.choices[0]?.delta?.content ?? "";
           if (text) {
             fullResponse += text;
             controller.enqueue(encoder.encode(text));
           }
         }
 
-        // Save assistant message after stream completes
         await supabase.from("messages").insert({
           conversation_id: conversationId,
           role: "assistant",

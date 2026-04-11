@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { genAI, detectLanguage, buildSystemPrompt } from "@/lib/claude";
+import { groq, GROQ_MODEL, detectLanguage, buildSystemPrompt } from "@/lib/groq";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -174,23 +174,30 @@ export async function POST(req: NextRequest) {
         }));
 
       let replyText = "";
-      let geminiError = "";
       try {
-        const model = genAI.getGenerativeModel({
-          model: "gemini-2.0-flash",
-          systemInstruction: systemPrompt,
+        // Build messages array for Groq (OpenAI-compatible format)
+        const messages: { role: "system" | "user" | "assistant"; content: string }[] = [
+          { role: "system", content: systemPrompt },
+          ...chatHistory.map((m: { role: string; parts: { text: string }[] }) => ({
+            role: (m.role === "model" ? "assistant" : "user") as "user" | "assistant",
+            content: m.parts[0].text,
+          })),
+          { role: "user", content: messageText },
+        ];
+
+        const completion = await groq.chat.completions.create({
+          model: GROQ_MODEL,
+          messages,
+          max_tokens: 500,
+          temperature: 0.7,
         });
-        const chat = model.startChat({ history: chatHistory });
-        const result = await chat.sendMessage(messageText);
-        replyText = result.response.text();
+        replyText = completion.choices[0]?.message?.content ?? "Marhba! Comment puis-je vous aider? 😊";
       } catch (err) {
-        geminiError = String(err);
-        console.error("[Meta Webhook] Gemini error:", geminiError);
-        // Save error as a system message so we can debug from Supabase
+        console.error("[Meta Webhook] Groq error:", String(err));
         await supabaseAdmin.from("messages").insert({
           conversation_id: conversationId,
           role: "system",
-          content: `GEMINI_ERROR: ${geminiError}`,
+          content: `GROQ_ERROR: ${String(err)}`,
         });
         replyText = "Marhba! Comment puis-je vous aider aujourd'hui? 😊";
       }

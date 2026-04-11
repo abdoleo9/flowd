@@ -35,42 +35,50 @@ export async function POST() {
     return NextResponse.json({ error: "Token ou Page ID manquant dans l'intégration" }, { status: 400 });
   }
 
-  // ── Fetch conversations from Meta Graph API ───────────────────────────────
-  const platform = integration.type === "instagram" ? "&platform=instagram" : "";
-  const convUrl = `https://graph.facebook.com/v19.0/${pageId}/conversations?fields=messages{message,from,created_time}&limit=20&access_token=${encodeURIComponent(accessToken)}${platform}`;
-
-  let conversations: Array<{ messages?: { data: Array<{ message: string; from: { id: string }; created_time: string }> } }> = [];
-  try {
-    const res = await fetch(convUrl);
-    const data = await res.json();
-    if (data.error) {
-      return NextResponse.json({ error: `Meta API: ${data.error.message}` }, { status: 400 });
-    }
-    conversations = data.data ?? [];
-  } catch {
-    return NextResponse.json({ error: "Impossible de contacter Meta API" }, { status: 500 });
-  }
-
-  if (!conversations.length) {
-    return NextResponse.json({ error: "Aucune conversation trouvée sur cette page" }, { status: 400 });
-  }
-
-  // ── Extract messages sent BY the page owner (not by customers) ───────────
+  // ── Try fetching conversations from Instagram Graph API ───────────────────
   const ownerMessages: string[] = [];
 
-  for (const conv of conversations) {
-    const msgs = conv.messages?.data ?? [];
-    for (const msg of msgs) {
-      // Messages from the page have from.id === pageId
-      if (msg.from?.id === pageId && msg.message?.trim()) {
-        ownerMessages.push(msg.message.trim());
+  try {
+    // Instagram User Token works on graph.instagram.com
+    const convUrl = `https://graph.instagram.com/v21.0/${pageId}/conversations?fields=messages{message,from,created_time}&limit=30&access_token=${encodeURIComponent(accessToken)}`;
+    const res = await fetch(convUrl);
+    const data = await res.json();
+
+    if (!data.error) {
+      const conversations = data.data ?? [];
+      for (const conv of conversations) {
+        const msgs = conv.messages?.data ?? [];
+        for (const msg of msgs) {
+          if (msg.from?.id === pageId && msg.message?.trim()) {
+            ownerMessages.push(msg.message.trim());
+          }
+        }
       }
     }
+  } catch {
+    // Will fall through to DB fallback
+  }
+
+  // ── Fallback: use manual replies already stored in Supabase ───────────────
+  if (ownerMessages.length < 3) {
+    const { data: dbMessages } = await supabase
+      .from("messages")
+      .select("content, conversations!inner(workspace_id, channel)")
+      .eq("conversations.workspace_id", workspaceId)
+      .eq("role", "assistant")
+      .order("created_at", { ascending: false })
+      .limit(80);
+
+    const dbTexts = (dbMessages ?? [])
+      .map((m: { content: string }) => m.content)
+      .filter((t: string) => t && !t.startsWith("GROQ_ERROR") && !t.startsWith("GEMINI_ERROR") && !t.startsWith("SEND_ERROR") && t.length > 10);
+
+    ownerMessages.push(...dbTexts);
   }
 
   if (ownerMessages.length < 3) {
     return NextResponse.json({
-      error: "Pas assez de messages envoyés par la page pour analyser le style (minimum 3 messages)",
+      error: "Pas assez de messages trouvés pour analyser votre style. Continuez à répondre à vos clients puis réessayez.",
     }, { status: 400 });
   }
 

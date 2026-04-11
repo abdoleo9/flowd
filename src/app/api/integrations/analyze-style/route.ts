@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getActiveWorkspaceId } from "@/lib/active-workspace";
-import { genAI } from "@/lib/claude";
+import { getGroq, GROQ_MODEL } from "@/lib/groq";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -98,15 +98,17 @@ Analyse ces messages et génère un profil de style d'écriture précis. Répond
 
   let styleProfile: Record<string, unknown>;
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-    const result = await model.generateContent(analysisPrompt);
-    const text = result.response.text().trim();
-
-    // Strip markdown code fences if present
+    const completion = await getGroq().chat.completions.create({
+      model: GROQ_MODEL,
+      messages: [{ role: "user", content: analysisPrompt }],
+      max_tokens: 1000,
+      temperature: 0.3,
+    });
+    const text = (completion.choices[0]?.message?.content ?? "").trim();
     const clean = text.replace(/^```json?\s*/i, "").replace(/```\s*$/i, "").trim();
     styleProfile = JSON.parse(clean);
   } catch (err) {
-    console.error("Gemini analysis error:", err);
+    console.error("Groq analysis error:", err);
     return NextResponse.json({ error: "Erreur lors de l'analyse IA" }, { status: 500 });
   }
 

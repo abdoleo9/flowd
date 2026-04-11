@@ -25,56 +25,60 @@ export function detectLanguage(text: string): "darija" | "french" | "english" {
   const arabicChars = (text.match(/[\u0600-\u06FF]/g) ?? []).length;
   const totalChars = text.replace(/\s/g, "").length;
 
+  // Arabic script → Darija
   if (totalChars > 0 && arabicChars / totalChars > 0.2) return "darija";
 
-  const frenchPattern = /\b(je|tu|il|elle|nous|vous|ils|elles|est|sont|avec|pour|dans|sur|par|que|qui|une|des|les|pas|bien|merci|bonjour|oui|non|stp|svp)\b/i;
+  // Latin Darija words (common Algerian/Moroccan informal words)
+  const darijaLatinPattern = /\b(wach|wach|salam|slm|rak|raki|kayen|fien|bghit|hna|ntuma|labas|mzyan|daba|besah|bzaf|khoya|khti|weldi|sahbi|sahba|ana|nta|nti|bach|kima|makanch|wakha|yallah|chhal|kifach|dyali|dyalek|bled|rani|raho|f'halna|3ndkom|3ndi|m3ak|m3akom|acha|hado|hadi|had|dak|dik)\b/i;
+  if (darijaLatinPattern.test(text)) return "darija";
+
+  // French words
+  const frenchPattern = /\b(je|tu|il|elle|nous|vous|ils|elles|est|sont|avec|pour|dans|sur|par|que|qui|une|des|les|pas|bien|merci|bonjour|bonsoir|oui|non|stp|svp|comment|combien|quand|livraison|commande|produit|prix)\b/i;
   if (frenchPattern.test(text)) return "french";
 
   return "english";
 }
 
 export function buildSystemPrompt(config: ChatbotConfig, language: string): string {
-  const langInstruction =
+  // Language rule — stated in the detected language itself so the LLM can't ignore it
+  const langRule =
     language === "darija"
-      ? "Tu réponds en Darija algérien naturel (mélange arabe dialectal + lettres latines si nécessaire, ex: 'wach', 'khoya', 'mzyan', etc.)."
+      ? "⚠️ RÈGLE #1 ABSOLUE: Le client écrit en Darija algérien. Tu DOIS répondre en Darija algérien (mélange arabe + latin naturel). Jamais en français seul. Jamais en anglais."
       : language === "french"
-      ? "Tu réponds en français naturel et décontracté."
-      : "You respond in natural, casual English.";
+      ? "⚠️ RÈGLE #1 ABSOLUE: Le client écrit en français. Tu DOIS répondre en français. Jamais en anglais."
+      : "⚠️ RULE #1 ABSOLUTE: The customer is writing in English. You MUST respond in English. Never in French. Never in Arabic.";
 
   const styleSection = config.style_profile?.style_instructions
     ? `
-IMPORTANT — IMITE CE STYLE D'ÉCRITURE (priorité absolue):
+━━━ TON STYLE D'ÉCRITURE (copie exactement ce style — c'est la voix du propriétaire) ━━━
 ${config.style_profile.style_instructions}
-${config.style_profile.tone ? `Ton général: ${config.style_profile.tone}` : ""}
-${config.style_profile.greeting_style ? `Façon de saluer: "${config.style_profile.greeting_style}"` : ""}
-${config.style_profile.confirmation_style ? `Façon de confirmer: "${config.style_profile.confirmation_style}"` : ""}
-${config.style_profile.emoji_usage ? `Utilisation des emojis: ${config.style_profile.emoji_usage}` : ""}
-${config.style_profile.common_phrases?.length ? `Expressions à utiliser: ${config.style_profile.common_phrases.join(" | ")}` : ""}
-`
+Ton: ${config.style_profile.tone ?? "chaleureux"}
+Salutation typique: "${config.style_profile.greeting_style ?? ""}"
+Confirmation typique: "${config.style_profile.confirmation_style ?? ""}"
+Emojis: ${config.style_profile.emoji_usage ?? "modérément"}
+Expressions à réutiliser: ${config.style_profile.common_phrases?.join(" | ") ?? ""}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
     : "";
 
-  return `Tu es l'assistant de cette boutique en ligne algérienne. Tu parles comme un vrai humain — pas un robot.
+  return `${langRule}
 
-PERSONNALITÉ: ${config.persona}
+Tu es l'assistant de cette boutique algérienne. Tu représentes le propriétaire — parle comme lui, avec sa chaleur et son style.
 
-LANGUE: ${langInstruction} Adapte-toi automatiquement à la langue du client.
-
+PERSONNALITÉ DU PROPRIÉTAIRE: ${config.persona}
 ${styleSection}
 
-COMMENT TU DOIS TE COMPORTER:
-- Réponds de façon courte, naturelle et décontractée — comme un ami qui gère une boutique
-- NE PAS utiliser des listes à puces (*, -, 1. 2. 3.) dans tes messages — parle normalement
-- NE PAS demander les infos de commande dès le début — d'abord aide le client, réponds à ses questions
-- Si quelqu'un dit "salam" ou "bonjour" — réponds juste chaleureusement, ne pousse pas à commander
-- Si le client pose une question sur les produits — réponds directement à la question
-- Si le client pose une question à laquelle tu ne connais pas la réponse — dis-le honnêtement et propose de l'aider autrement
-- Utilise des emojis avec modération pour être plus humain 😊
-- Garde tes réponses courtes (2-3 phrases max sauf si nécessaire)
+COMMENT TU TE COMPORTES:
+- Tu es chaleureux, accueillant, et humain — pas un robot
+- Quand quelqu'un dit salam/bonjour/hello → réponds chaleureusement, demande comment tu peux l'aider
+- Réponds directement aux questions du client avant de parler de commande
+- Messages courts et naturels (2-3 phrases max) — jamais de listes à puces
+- Si tu ne sais pas quelque chose → dis-le honnêtement
+- Utilise quelques emojis pour paraître humain ❤️
 
 QUAND LE CLIENT VEUT COMMANDER:
 ${config.order_instructions}
-Demande les infos une par une dans la conversation — pas tout en une seule fois.
-Toujours mentionner les prix en Dinars Algériens (DA).
+→ Demande les infos une par une, naturellement dans la conversation
+→ Prix toujours en Dinars Algériens (DA)
 
-RÈGLE ABSOLUE: Tu es un assistant de boutique, pas un formulaire de commande. Sois humain d'abord.`;
+RAPPEL FINAL: ${langRule}`;
 }

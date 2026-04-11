@@ -204,15 +204,20 @@ export async function POST(req: NextRequest) {
 
       // ── Send reply via Meta Graph API ──────────────────────────────────────
       try {
-        // For Instagram: POST /{ig-user-id}/messages with token as query param
+        // For Instagram: use graph.instagram.com with the Instagram user token
         const igUserId = creds.page_id ?? pageId;
         const sendUrl = integration.type === "instagram"
-          ? `https://graph.facebook.com/v21.0/${igUserId}/messages?access_token=${encodeURIComponent(accessToken)}`
+          ? `https://graph.instagram.com/v21.0/${igUserId}/messages`
           : `https://graph.facebook.com/v21.0/me/messages?access_token=${encodeURIComponent(accessToken)}`;
 
         const graphRes = await fetch(sendUrl, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(integration.type === "instagram"
+              ? { "Authorization": `Bearer ${accessToken}` }
+              : {}),
+          },
           body: JSON.stringify({
             recipient: { id: senderId },
             message: { text: replyText },

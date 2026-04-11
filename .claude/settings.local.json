@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(npm run:*)",
+      "Bash(npx vercel:*)",
+      "mcp__Desktop_Commander__read_multiple_files",
+      "mcp__Desktop_Commander__read_file",
+      "Bash(npx next:*)",
+      "WebSearch",
+      "WebFetch(domain:www.youtube.com)",
+      "WebFetch(domain:www.google.com)",
+      "WebFetch(domain:www.facebook.com)",
+      "WebFetch(domain:dev.to)",
+      "WebFetch(domain:innocentanyaele.medium.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:jorgejrzz.medium.com)",
+      "mcp__Desktop_Commander__list_directory",
+      "Bash(xargs wc:*)"
+    ]
+  }
+}

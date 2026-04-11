@@ -19,9 +19,12 @@ export async function GET(req: NextRequest) {
   const challenge = req.nextUrl.searchParams.get("hub.challenge");
 
   if (mode === "subscribe" && token === VERIFY_TOKEN) {
-    return new Response(challenge ?? "", { status: 200 });
+    return new Response(challenge ?? "", {
+      status: 200,
+      headers: { "Content-Type": "text/plain" },
+    });
   }
-  return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  return new Response("Forbidden", { status: 403 });
 }
 
 // ─── POST: Incoming messages ─────────────────────────────────────────────────

@@ -2,7 +2,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
-interface StyleProfile {
+export interface StyleProfile {
   tone?: string;
   languages?: string[];
   greeting_style?: string;
@@ -12,7 +12,7 @@ interface StyleProfile {
   style_instructions?: string;
 }
 
-interface ChatbotConfig {
+export interface ChatbotConfig {
   persona: string;
   language_mode: string;
   greeting: string;

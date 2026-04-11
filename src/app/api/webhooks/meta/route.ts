@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { groq, GROQ_MODEL, detectLanguage, buildSystemPrompt } from "@/lib/groq";
+import { getGroq, GROQ_MODEL, detectLanguage, buildSystemPrompt } from "@/lib/groq";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -185,7 +185,7 @@ export async function POST(req: NextRequest) {
           { role: "user", content: messageText },
         ];
 
-        const completion = await groq.chat.completions.create({
+        const completion = await getGroq().chat.completions.create({
           model: GROQ_MODEL,
           messages,
           max_tokens: 500,

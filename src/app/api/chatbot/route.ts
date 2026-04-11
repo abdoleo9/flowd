@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
-import { groq, GROQ_MODEL, detectLanguage, buildSystemPrompt } from "@/lib/groq";
+import { getGroq, GROQ_MODEL, detectLanguage, buildSystemPrompt } from "@/lib/groq";
 import { getActiveWorkspaceId } from "@/lib/active-workspace";
 
 export const runtime = "nodejs";
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        const groqStream = await groq.chat.completions.create({
+        const groqStream = await getGroq().chat.completions.create({
           model: GROQ_MODEL,
           messages,
           max_tokens: 500,

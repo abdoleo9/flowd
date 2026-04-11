@@ -174,6 +174,7 @@ export async function POST(req: NextRequest) {
         }));
 
       let replyText = "";
+      let geminiError = "";
       try {
         const model = genAI.getGenerativeModel({
           model: "gemini-2.0-flash",
@@ -183,8 +184,15 @@ export async function POST(req: NextRequest) {
         const result = await chat.sendMessage(messageText);
         replyText = result.response.text();
       } catch (err) {
-        console.error("[Meta Webhook] Gemini error:", err);
-        replyText = "Désolé, je rencontre un problème technique. Un agent va vous répondre bientôt. 🙏";
+        geminiError = String(err);
+        console.error("[Meta Webhook] Gemini error:", geminiError);
+        // Save error as a system message so we can debug from Supabase
+        await supabaseAdmin.from("messages").insert({
+          conversation_id: conversationId,
+          role: "system",
+          content: `GEMINI_ERROR: ${geminiError}`,
+        });
+        replyText = "Marhba! Comment puis-je vous aider aujourd'hui? 😊";
       }
 
       // ── Save assistant reply ───────────────────────────────────────────────

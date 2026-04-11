@@ -478,8 +478,6 @@ function WizardModal({
     setStep(4); // advance to webhook step (step 5)
   }
 
-  // Allow save as long as both fields are filled — validation is a warning, not a hard block
-  const canSave = values["access_token"]?.trim().length > 10 && values["page_id"]?.trim().length > 3;
 
   return (
     <Modal

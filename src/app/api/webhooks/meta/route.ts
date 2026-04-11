@@ -3,8 +3,9 @@ import { createClient } from "@supabase/supabase-js";
 import { genAI, detectLanguage, buildSystemPrompt } from "@/lib/claude";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-const VERIFY_TOKEN = process.env.WEBHOOK_VERIFY_TOKEN ?? "flowd_webhook_2024";
+const VERIFY_TOKEN = "flowd_webhook_2024";
 
 // Service-role client — bypasses RLS (needed for webhook, no user session)
 const supabaseAdmin = createClient(

@@ -16,7 +16,8 @@
       "WebFetch(domain:github.com)",
       "WebFetch(domain:jorgejrzz.medium.com)",
       "mcp__Desktop_Commander__list_directory",
-      "Bash(xargs wc:*)"
+      "Bash(xargs wc:*)",
+      "Bash(curl -s -w \"\\\\n\\\\nHTTP Status: %{http_code}\" \"https://flowd-nine.vercel.app/api/webhooks/meta?hub.mode=subscribe&hub.verify_token=flowd_webhook_2024&hub.challenge=123456789\")"
     ]
   }
 }

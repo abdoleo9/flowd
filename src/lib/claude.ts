@@ -1,9 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-export const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!, {
-  // Use stable v1 API instead of v1beta
-  httpOptions: { apiVersion: "v1" },
-} as object);
+export const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 interface StyleProfile {
   tone?: string;

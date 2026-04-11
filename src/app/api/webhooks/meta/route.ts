@@ -177,7 +177,7 @@ export async function POST(req: NextRequest) {
       let geminiError = "";
       try {
         const model = genAI.getGenerativeModel({
-          model: "gemini-2.0-flash",
+          model: "gemini-1.5-flash",
           systemInstruction: systemPrompt,
         });
         const chat = model.startChat({ history: chatHistory });
@@ -204,28 +204,32 @@ export async function POST(req: NextRequest) {
 
       // ── Send reply via Meta Graph API ──────────────────────────────────────
       try {
-        // For Instagram: use /{ig-user-id}/messages (NOT /me/messages)
-        // pageId here is the Instagram Business Account ID stored in credentials
+        // For Instagram: POST /{ig-user-id}/messages with token as query param
         const igUserId = creds.page_id ?? pageId;
         const sendUrl = integration.type === "instagram"
-          ? `https://graph.facebook.com/v19.0/${igUserId}/messages`
-          : `https://graph.facebook.com/v19.0/me/messages`;
+          ? `https://graph.facebook.com/v21.0/${igUserId}/messages?access_token=${encodeURIComponent(accessToken)}`
+          : `https://graph.facebook.com/v21.0/me/messages?access_token=${encodeURIComponent(accessToken)}`;
 
         const graphRes = await fetch(sendUrl, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${accessToken}`,
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             recipient: { id: senderId },
             message: { text: replyText },
             messaging_type: "RESPONSE",
           }),
         });
+        const sendResult = await graphRes.json();
         if (!graphRes.ok) {
-          const errBody = await graphRes.json();
-          console.error("[Meta Webhook] Graph API error:", JSON.stringify(errBody));
+          console.error("[Meta Webhook] Graph API send error:", JSON.stringify(sendResult));
+          // Save send error to DB for debugging
+          await supabaseAdmin.from("messages").insert({
+            conversation_id: conversationId,
+            role: "system",
+            content: `SEND_ERROR: ${JSON.stringify(sendResult)}`,
+          });
+        } else {
+          console.log("[Meta Webhook] Message sent successfully:", JSON.stringify(sendResult));
         }
       } catch (err) {
         console.error("[Meta Webhook] Failed to send reply:", err);

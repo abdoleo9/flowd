@@ -164,24 +164,18 @@ export async function POST(req: NextRequest) {
       const language = detectLanguage(messageText);
       const systemPrompt = buildSystemPrompt(chatbotConfig, language);
 
-      // Build history excluding the just-inserted user message
-      const chatHistory = (history ?? [])
-        .slice(0, -1)
-        .filter((m: { role: string }) => m.role !== "system")
-        .map((m: { role: string; content: string }) => ({
-          role: m.role === "assistant" ? "model" : "user",
-          parts: [{ text: m.content }],
-        }));
-
       let replyText = "";
       try {
-        // Build messages array for Groq (OpenAI-compatible format)
+        // Build messages for Groq — directly use content from DB (fix: was using Gemini parts format)
         const messages: { role: "system" | "user" | "assistant"; content: string }[] = [
           { role: "system", content: systemPrompt },
-          ...chatHistory.map((m: { role: string; parts: { text: string }[] }) => ({
-            role: (m.role === "model" ? "assistant" : "user") as "user" | "assistant",
-            content: m.parts[0].text,
-          })),
+          ...(history ?? [])
+            .slice(0, -1) // exclude the just-inserted user message
+            .filter((m: { role: string }) => m.role !== "system")
+            .map((m: { role: string; content: string }) => ({
+              role: (m.role === "assistant" ? "assistant" : "user") as "user" | "assistant",
+              content: m.content,
+            })),
           { role: "user", content: messageText },
         ];
 

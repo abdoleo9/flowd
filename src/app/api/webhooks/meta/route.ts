@@ -196,21 +196,28 @@ export async function POST(req: NextRequest) {
 
       // ── Send reply via Meta Graph API ──────────────────────────────────────
       try {
-        const graphRes = await fetch(
-          `https://graph.facebook.com/v19.0/me/messages?access_token=${encodeURIComponent(accessToken)}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              recipient: { id: senderId },
-              message: { text: replyText },
-              messaging_type: "RESPONSE",
-            }),
-          }
-        );
+        // For Instagram: use /{ig-user-id}/messages (NOT /me/messages)
+        // pageId here is the Instagram Business Account ID stored in credentials
+        const igUserId = creds.page_id ?? pageId;
+        const sendUrl = integration.type === "instagram"
+          ? `https://graph.facebook.com/v19.0/${igUserId}/messages`
+          : `https://graph.facebook.com/v19.0/me/messages`;
+
+        const graphRes = await fetch(sendUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            recipient: { id: senderId },
+            message: { text: replyText },
+            messaging_type: "RESPONSE",
+          }),
+        });
         if (!graphRes.ok) {
           const errBody = await graphRes.json();
-          console.error("[Meta Webhook] Graph API error:", errBody);
+          console.error("[Meta Webhook] Graph API error:", JSON.stringify(errBody));
         }
       } catch (err) {
         console.error("[Meta Webhook] Failed to send reply:", err);

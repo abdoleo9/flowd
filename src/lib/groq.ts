@@ -13,4 +13,4 @@ export function getGroq(): Groq {
 
 // Keep named export for backward compat
 export { detectLanguage, buildSystemPrompt } from "./claude";
-export type { ChatbotConfig, StyleProfile } from "./claude";
+export type { ChatbotConfig } from "./claude";

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
-import { getGroq, GROQ_MODEL, detectLanguage, buildSystemPrompt } from "@/lib/groq";
+import { getGenAI, GEMINI_MODEL, detectLanguage, buildSystemPrompt, fetchProductCatalog } from "@/lib/claude";
 import { getActiveWorkspaceId } from "@/lib/active-workspace";
 
 export const runtime = "nodejs";
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 
   const { data: workspace } = await supabase
     .from("workspaces")
-    .select("chatbot_config")
+    .select("chatbot_config, name")
     .eq("id", workspaceId)
     .single();
 
@@ -58,44 +58,54 @@ export async function POST(request: NextRequest) {
   });
 
   const chatbotConfig = workspace?.chatbot_config ?? {
-    persona: "Assistant sympathique",
-    language_mode: "auto",
-    greeting: "Marhba!",
-    order_instructions: "Demande le nom, téléphone, wilaya et adresse.",
-    languages: { darija: true, french: true, english: true, arabic: false },
+    product_category: "produits",
+    delivery_days: "3 à 7",
+    payment_methods: "الدفع عند الاستلام",
   };
 
-  const systemPrompt = buildSystemPrompt(chatbotConfig, language);
+  // Fetch product catalog from Google Sheets if integration is connected
+  let catalog = "";
+  const { data: sheetsIntegration } = await supabase
+    .from("integrations")
+    .select("credentials")
+    .eq("workspace_id", workspaceId)
+    .eq("type", "google_sheets")
+    .eq("is_active", true)
+    .maybeSingle();
 
-  // Build messages for Groq (OpenAI-compatible)
-  const messages: { role: "system" | "user" | "assistant"; content: string }[] = [
-    { role: "system", content: systemPrompt },
-    ...(history ?? [])
-      .filter((m: { role: string }) => m.role !== "system")
-      .map((m: { role: string; content: string }) => ({
-        role: (m.role === "assistant" ? "assistant" : "user") as "user" | "assistant",
-        content: m.content,
-      })),
-    { role: "user", content },
-  ];
+  if (sheetsIntegration?.credentials) {
+    const creds = sheetsIntegration.credentials as Record<string, string>;
+    if (creds.sheet_id && creds.api_key) {
+      catalog = await fetchProductCatalog(creds.sheet_id, creds.api_key);
+    }
+  }
 
-  // Stream Groq response
+  const systemPrompt = buildSystemPrompt(chatbotConfig, workspace?.name ?? "La Boutique", catalog);
+
+  // Build Gemini chat history (role: "user" | "model")
+  const geminiHistory = (history ?? [])
+    .filter((m: { role: string }) => m.role === "user" || m.role === "assistant")
+    .map((m: { role: string; content: string }) => ({
+      role: (m.role === "assistant" ? "model" : "user") as "user" | "model",
+      parts: [{ text: m.content }],
+    }));
+
+  // Stream Gemini response
   const encoder = new TextEncoder();
   let fullResponse = "";
 
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        const groqStream = await getGroq().chat.completions.create({
-          model: GROQ_MODEL,
-          messages,
-          max_tokens: 500,
-          temperature: 0.7,
-          stream: true,
+        const model = getGenAI().getGenerativeModel({
+          model: GEMINI_MODEL,
+          systemInstruction: systemPrompt,
         });
+        const chat = model.startChat({ history: geminiHistory });
+        const result = await chat.sendMessageStream(content);
 
-        for await (const chunk of groqStream) {
-          const text = chunk.choices[0]?.delta?.content ?? "";
+        for await (const chunk of result.stream) {
+          const text = chunk.text();
           if (text) {
             fullResponse += text;
             controller.enqueue(encoder.encode(text));

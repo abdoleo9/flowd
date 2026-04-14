@@ -199,23 +199,12 @@ const MOCK_ORDERS = [
 
 // ─── Logo Component ───────────────────────────────────────────────────────────
 function FlowdLogo({ height = 32 }: { height?: number }) {
-  const w = height * 3.6;
   return (
-    <svg width={w} height={height} viewBox="0 0 130 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="lg" x1="0" y1="0" x2="44" y2="36" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#4361ee" />
-          <stop offset="1" stopColor="#7b8fff" />
-        </linearGradient>
-      </defs>
-      {/* Mark — two overlapping loops */}
-      <ellipse cx="13" cy="18" rx="9" ry="13" stroke="url(#lg)" strokeWidth="3.2" fill="none" strokeLinecap="round" />
-      <ellipse cx="27" cy="18" rx="9" ry="13" stroke="url(#lg)" strokeWidth="3.2" fill="none" strokeLinecap="round" />
-      <line x1="13" y1="5" x2="27" y2="5" stroke="url(#lg)" strokeWidth="3.2" strokeLinecap="round" />
-      <line x1="13" y1="31" x2="27" y2="31" stroke="url(#lg)" strokeWidth="3.2" strokeLinecap="round" />
-      {/* "flowd" wordmark */}
-      <text x="46" y="25" fill="white" fontSize="20" fontWeight="700" fontFamily="DM Sans, sans-serif" letterSpacing="-0.5">flowd</text>
-    </svg>
+    <div className="flex items-center gap-2">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/logo.svg" alt="Flowd" style={{ height, width: height }} className="object-contain" />
+      <span style={{ fontSize: height * 0.65, lineHeight: 1 }} className="font-bold text-white tracking-tight">flowd</span>
+    </div>
   );
 }
 

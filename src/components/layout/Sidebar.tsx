@@ -14,7 +14,6 @@ import {
   Plug,
   Users,
   Settings,
-  Zap,
   X,
 } from "lucide-react";
 
@@ -43,9 +42,8 @@ export function Sidebar() {
       {/* Logo */}
       <div className="px-5 py-5 border-b border-border flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center flex-shrink-0">
-            <Zap size={16} className="text-white" />
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.svg" alt="Flowd" className="h-8 w-8 object-contain flex-shrink-0" />
           <span className="font-bold text-white text-base">Flowd</span>
         </div>
         {/* Close button — mobile only */}

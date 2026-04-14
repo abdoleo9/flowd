@@ -70,10 +70,9 @@ export default function OnboardingPage() {
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
       {/* Logo */}
       <div className="mb-10 text-center">
-        <div className="inline-flex items-center gap-2 mb-2">
-          <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
-            <span className="text-white font-bold text-sm">F</span>
-          </div>
+        <div className="inline-flex items-center gap-2.5 mb-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.svg" alt="Flowd" className="h-8 w-8 object-contain" />
           <span className="text-white font-semibold text-xl tracking-tight">flowd</span>
         </div>
         <p className="text-muted-foreground text-sm">Configurez votre espace en 2 étapes</p>

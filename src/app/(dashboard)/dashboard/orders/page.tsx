@@ -11,17 +11,10 @@ import { OrderDrawer } from "@/components/orders/OrderDrawer";
 import { Button } from "@/components/ui/Button";
 import { toast } from "sonner";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-
-const STATUS_TABS: { value: "all" | OrderStatus; label: string }[] = [
-  { value: "all", label: "Toutes" },
-  { value: "pending", label: "Nouveau" },
-  { value: "confirmed", label: "Confirmé" },
-  { value: "shipped", label: "Expédié" },
-  { value: "delivered", label: "Livré" },
-  { value: "returned", label: "Retourné" },
-];
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function OrdersPage() {
+  const { t } = useLanguage();
   const [orders, setOrders] = useState<Order[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -34,6 +27,15 @@ export default function OrdersPage() {
   const [drawerOrder, setDrawerOrder] = useState<Order | null>(null);
 
   const limit = 20;
+
+  const STATUS_TABS: { value: "all" | OrderStatus; label: string }[] = [
+    { value: "all", label: t.orders.all },
+    { value: "pending", label: t.orders.tabNew },
+    { value: "confirmed", label: t.status.confirmed },
+    { value: "shipped", label: t.status.shipped },
+    { value: "delivered", label: t.status.delivered },
+    { value: "returned", label: t.status.returned },
+  ];
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -99,7 +101,6 @@ export default function OrdersPage() {
         const order = orders.find((o) => o.id === id);
         if (!order) return;
 
-        // Update order status to shipped
         const res = await fetch("/api/orders", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -107,7 +108,6 @@ export default function OrdersPage() {
         });
         if (!res.ok) return;
 
-        // Insert delivery parcel
         const { error } = await supabase.from("delivery_parcels").insert({
           workspace_id: order.workspace_id,
           order_id: order.id,
@@ -138,9 +138,9 @@ export default function OrdersPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-white">Commandes</h1>
+          <h1 className="text-xl font-bold text-white">{t.orders.title}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            {total} commande{total !== 1 ? "s" : ""}
+            {total} {t.orders.title.toLowerCase()}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -151,14 +151,14 @@ export default function OrdersPage() {
             onClick={() => fetchOrders()}
             loading={loading}
           >
-            Actualiser
+            {t.actions.refresh}
           </Button>
           <Button
             size="sm"
             icon={<Plus size={14} />}
             onClick={() => setCreateOpen(true)}
           >
-            Nouvelle commande
+            {t.orders.create}
           </Button>
         </div>
       </div>
@@ -186,7 +186,7 @@ export default function OrdersPage() {
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
           <input
             type="text"
-            placeholder="Rechercher nom, tél, produit…"
+            placeholder={t.orders.searchPlaceholder}
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="w-full bg-card border border-border rounded-lg pl-8 pr-3.5 py-2 text-sm text-white placeholder:text-muted outline-none focus:border-accent"
@@ -197,7 +197,7 @@ export default function OrdersPage() {
           onChange={(e) => { setSourceFilter(e.target.value as "all" | OrderSource); setPage(1); }}
           className="bg-card border border-border rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-accent"
         >
-          <option value="all">Toutes sources</option>
+          <option value="all">{t.orders.allSources}</option>
           <option value="manual">Manuel</option>
           <option value="instagram">Instagram</option>
           <option value="messenger">Messenger</option>
@@ -210,7 +210,7 @@ export default function OrdersPage() {
       {selected.size > 0 && (
         <div className="flex items-center gap-3 bg-accent-muted border border-accent/20 rounded-xl px-4 py-2.5">
           <span className="text-sm text-accent font-medium">
-            {selected.size} sélectionnée{selected.size > 1 ? "s" : ""}
+            {selected.size} {t.orders.selected}
           </span>
           <div className="ml-auto flex items-center gap-2">
             <Button
@@ -219,14 +219,14 @@ export default function OrdersPage() {
               icon={<CheckSquare size={13} />}
               onClick={bulkConfirm}
             >
-              Confirmer tout
+              {t.orders.confirmAll}
             </Button>
             <Button
               size="sm"
               icon={<Truck size={13} />}
               onClick={bulkSendDelivery}
             >
-              Envoyer en livraison
+              {t.orders.sendDelivery}
             </Button>
           </div>
         </div>
@@ -246,13 +246,13 @@ export default function OrdersPage() {
                     className="rounded border-border"
                   />
                 </th>
-                <th className="text-left py-3 px-4 text-xs text-muted-foreground font-medium">Client</th>
-                <th className="text-left py-3 px-4 text-xs text-muted-foreground font-medium">Produit</th>
-                <th className="hidden md:table-cell text-left py-3 px-4 text-xs text-muted-foreground font-medium whitespace-nowrap">Wilaya</th>
-                <th className="text-left py-3 px-4 text-xs text-muted-foreground font-medium whitespace-nowrap">Montant</th>
-                <th className="hidden sm:table-cell text-left py-3 px-4 text-xs text-muted-foreground font-medium">Source</th>
-                <th className="text-left py-3 px-4 text-xs text-muted-foreground font-medium">Statut</th>
-                <th className="hidden lg:table-cell text-left py-3 px-4 text-xs text-muted-foreground font-medium whitespace-nowrap">Date</th>
+                <th className="text-left py-3 px-4 text-xs text-muted-foreground font-medium">{t.orders.customer}</th>
+                <th className="text-left py-3 px-4 text-xs text-muted-foreground font-medium">{t.orders.product}</th>
+                <th className="hidden md:table-cell text-left py-3 px-4 text-xs text-muted-foreground font-medium whitespace-nowrap">{t.orders.wilaya}</th>
+                <th className="text-left py-3 px-4 text-xs text-muted-foreground font-medium whitespace-nowrap">{t.orders.price}</th>
+                <th className="hidden sm:table-cell text-left py-3 px-4 text-xs text-muted-foreground font-medium">{t.orders.source}</th>
+                <th className="text-left py-3 px-4 text-xs text-muted-foreground font-medium">{t.nav.orders}</th>
+                <th className="hidden lg:table-cell text-left py-3 px-4 text-xs text-muted-foreground font-medium whitespace-nowrap">{t.orders.date}</th>
                 <th className="hidden sm:table-cell py-3 px-4"></th>
               </tr>
             </thead>
@@ -260,13 +260,13 @@ export default function OrdersPage() {
               {loading ? (
                 <tr>
                   <td colSpan={9} className="py-12 text-center text-muted-foreground text-sm">
-                    Chargement…
+                    {t.actions.loading}
                   </td>
                 </tr>
               ) : orders.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="py-12 text-center text-muted-foreground text-sm">
-                    Aucune commande trouvée
+                    {t.orders.noOrders}
                   </td>
                 </tr>
               ) : (
@@ -319,16 +319,16 @@ export default function OrdersPage() {
                               method: "PATCH",
                               headers: { "Content-Type": "application/json" },
                               body: JSON.stringify({ id: order.id, status: "confirmed" }),
-                            }).then(() => { toast.success("Confirmé"); fetchOrders(); })
+                            }).then(() => { toast.success(t.actions.confirm); fetchOrders(); })
                           }
                         >
-                          Confirmer
+                          {t.actions.confirm}
                         </button>
                         <button
                           className="text-xs px-2 py-1 rounded bg-orange-muted text-orange hover:bg-orange/20 transition-colors"
-                          onClick={() => toast.info("Envoi en livraison…")}
+                          onClick={() => toast.info(t.orders.sendDelivery + "…")}
                         >
-                          Livraison
+                          {t.nav.delivery}
                         </button>
                       </div>
                     </td>
@@ -343,7 +343,7 @@ export default function OrdersPage() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-5 py-3 border-t border-border">
             <span className="text-xs text-muted-foreground">
-              Page {page} sur {totalPages}
+              Page {page} / {totalPages}
             </span>
             <div className="flex items-center gap-2">
               <Button
@@ -352,7 +352,7 @@ export default function OrdersPage() {
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
               >
-                Précédent
+                {t.orders.previous}
               </Button>
               <Button
                 size="sm"
@@ -360,7 +360,7 @@ export default function OrdersPage() {
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
               >
-                Suivant
+                {t.orders.next}
               </Button>
             </div>
           </div>

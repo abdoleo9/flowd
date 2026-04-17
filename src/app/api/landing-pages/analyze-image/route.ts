@@ -13,14 +13,16 @@ export async function POST(req: NextRequest) {
 
   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
-  const result = await model.generateContent([
-    {
-      inlineData: {
-        data: imageBase64,
-        mimeType: mimeType || 'image/jpeg',
+  try {
+    const result = await model.generateContent([
+      {
+        inlineData: {
+          data: imageBase64,
+          mimeType: mimeType || 'image/jpeg',
+        },
       },
-    },
-    { text: `You are an expert Algerian e-commerce product analyst.
+      {
+        text: `You are an expert Algerian e-commerce product analyst.
 
 Analyze this product photo and return a JSON object with these exact keys:
 - product_name: short commercial product name in French (2-5 words)
@@ -34,17 +36,18 @@ Rules:
 - Base everything strictly on what you SEE in the image
 - If the image is unclear or not a product, still return your best guess
 - Return ONLY valid JSON, no markdown, no explanation, no backticks`,
-  ]);
+      },
+    ]);
 
-  const text = result.response.text()
-    .replace(/```json\n?/g, '')
-    .replace(/\n?```/g, '')
-    .trim();
+    const text = result.response.text()
+      .replace(/```json\n?/g, '')
+      .replace(/\n?```/g, '')
+      .trim();
 
-  try {
     const parsed = JSON.parse(text);
     return NextResponse.json(parsed);
-  } catch {
-    return NextResponse.json({ error: 'Failed to parse AI response' }, { status: 500 });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

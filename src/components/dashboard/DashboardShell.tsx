@@ -34,13 +34,7 @@ export function DashboardShell({
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-bold text-white">{t.dashboard.title}</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          {t.dashboard.title === "Dashboard"
-            ? "Overview of your activity"
-            : t.dashboard.title === "لوحة التحكم"
-            ? "نظرة عامة على نشاطك"
-            : "Vue d'ensemble de votre activité"}
-        </p>
+        <p className="text-sm text-muted-foreground mt-0.5">{t.dashboard.subtitle}</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">

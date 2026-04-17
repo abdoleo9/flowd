@@ -11,26 +11,10 @@ import { Modal } from "@/components/ui/Modal";
 import { Input, Select } from "@/components/ui/Input";
 import { toast } from "sonner";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
-
-const roleConfig: Record<TeamRole, { label: string; variant: "orange" | "blue" | "success" | "purple" }> = {
-  owner: { label: "Propriétaire", variant: "orange" },
-  admin: { label: "Admin", variant: "blue" },
-  confirmer: { label: "Confirmeur", variant: "success" },
-  agent: { label: "Agent", variant: "purple" },
-};
-
-const PERMISSIONS = [
-  { label: "Voir le dashboard", owner: true, admin: true, confirmer: true, agent: false },
-  { label: "Gérer les commandes", owner: true, admin: true, confirmer: true, agent: false },
-  { label: "Chatbot", owner: true, admin: true, confirmer: false, agent: true },
-  { label: "Livraison", owner: true, admin: true, confirmer: true, agent: false },
-  { label: "Intégrations", owner: true, admin: true, confirmer: false, agent: false },
-  { label: "Gérer l'équipe", owner: true, admin: true, confirmer: false, agent: false },
-  { label: "Facturation", owner: true, admin: false, confirmer: false, agent: false },
-  { label: "Supprimer le workspace", owner: true, admin: false, confirmer: false, agent: false },
-];
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function TeamPage() {
+  const { t } = useLanguage();
   const [members, setMembers] = useState<(TeamMember & { user?: { email: string; full_name: string | null } })[]>([]);
   const [loading, setLoading] = useState(true);
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -39,6 +23,24 @@ export default function TeamPage() {
   const [inviting, setInviting] = useState(false);
   const supabase = getSupabaseBrowserClient();
   const { activeWorkspace } = useWorkspace();
+
+  const roleConfig: Record<TeamRole, { label: string; variant: "orange" | "blue" | "success" | "purple" }> = {
+    owner: { label: t.team.roles.owner, variant: "orange" },
+    admin: { label: t.team.roles.admin, variant: "blue" },
+    confirmer: { label: t.team.roles.confirmer, variant: "success" },
+    agent: { label: t.team.roles.agent, variant: "purple" },
+  };
+
+  const PERMISSIONS = [
+    { label: t.team.permView, owner: true, admin: true, confirmer: true, agent: false },
+    { label: t.team.permOrders, owner: true, admin: true, confirmer: true, agent: false },
+    { label: t.team.permChatbot, owner: true, admin: true, confirmer: false, agent: true },
+    { label: t.team.permDelivery, owner: true, admin: true, confirmer: true, agent: false },
+    { label: t.team.permIntegrations, owner: true, admin: true, confirmer: false, agent: false },
+    { label: t.team.permTeam, owner: true, admin: true, confirmer: false, agent: false },
+    { label: t.team.permBilling, owner: true, admin: false, confirmer: false, agent: false },
+    { label: t.team.permDelete, owner: true, admin: false, confirmer: false, agent: false },
+  ];
 
   const fetchMembers = useCallback(async () => {
     if (!activeWorkspace) return;
@@ -86,13 +88,11 @@ export default function TeamPage() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-white">Équipe</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Gérez les membres de votre workspace
-          </p>
+          <h1 className="text-xl font-bold text-white">{t.team.title}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{t.team.subtitle}</p>
         </div>
         <Button size="sm" icon={<UserPlus size={14} />} onClick={() => setInviteOpen(true)}>
-          Inviter un membre
+          {t.team.invite}
         </Button>
       </div>
 
@@ -102,11 +102,11 @@ export default function TeamPage() {
         <table className="w-full">
           <thead>
             <tr className="border-b border-border">
-              <th className="text-left py-3 px-4 text-xs text-muted-foreground font-medium">Membre</th>
-              <th className="hidden sm:table-cell text-left py-3 px-4 text-xs text-muted-foreground font-medium">Email</th>
-              <th className="text-left py-3 px-4 text-xs text-muted-foreground font-medium">Rôle</th>
-              <th className="hidden md:table-cell text-left py-3 px-4 text-xs text-muted-foreground font-medium">Depuis</th>
-              <th className="hidden sm:table-cell text-left py-3 px-4 text-xs text-muted-foreground font-medium">Statut</th>
+              <th className="text-left py-3 px-4 text-xs text-muted-foreground font-medium">{t.team.member}</th>
+              <th className="hidden sm:table-cell text-left py-3 px-4 text-xs text-muted-foreground font-medium">{t.settings.email}</th>
+              <th className="text-left py-3 px-4 text-xs text-muted-foreground font-medium">{t.team.role}</th>
+              <th className="hidden md:table-cell text-left py-3 px-4 text-xs text-muted-foreground font-medium">{t.team.joined}</th>
+              <th className="hidden sm:table-cell text-left py-3 px-4 text-xs text-muted-foreground font-medium">{t.nav.dashboard}</th>
               <th className="py-3 px-4"></th>
             </tr>
           </thead>
@@ -114,13 +114,13 @@ export default function TeamPage() {
             {loading ? (
               <tr>
                 <td colSpan={6} className="py-12 text-center text-muted-foreground text-sm">
-                  Chargement…
+                  {t.actions.loading}
                 </td>
               </tr>
             ) : members.length === 0 ? (
               <tr>
                 <td colSpan={6} className="py-12 text-center text-muted-foreground text-sm">
-                  Aucun membre
+                  {t.team.noMembers}
                 </td>
               </tr>
             ) : (
@@ -149,7 +149,7 @@ export default function TeamPage() {
                     <td className="hidden sm:table-cell py-3 px-4">
                       <span className="flex items-center gap-1.5 text-xs text-success">
                         <span className="w-1.5 h-1.5 rounded-full bg-success" />
-                        Actif
+                        {t.team.active}
                       </span>
                     </td>
                     <td className="py-3 px-4">
@@ -158,7 +158,7 @@ export default function TeamPage() {
                           onClick={() => removeMember(member.id)}
                           className="text-xs text-danger hover:text-danger/70 transition-colors"
                         >
-                          Retirer
+                          {t.team.remove}
                         </button>
                       )}
                     </td>
@@ -173,12 +173,12 @@ export default function TeamPage() {
 
       {/* Permissions grid */}
       <div>
-        <h2 className="text-sm font-semibold text-white mb-4">Rôles & Permissions</h2>
+        <h2 className="text-sm font-semibold text-white mb-4">{t.team.rolesPermissions}</h2>
         <div className="bg-card border border-border rounded-xl overflow-hidden">
           <table className="w-full">
             <thead>
               <tr className="border-b border-border">
-                <th className="text-left py-3 px-5 text-xs text-muted-foreground font-medium">Permission</th>
+                <th className="text-left py-3 px-5 text-xs text-muted-foreground font-medium">{t.team.permission}</th>
                 {(["owner", "admin", "confirmer", "agent"] as TeamRole[]).map((role) => (
                   <th key={role} className="text-center py-3 px-5 text-xs font-medium">
                     <Badge variant={roleConfig[role].variant}>{roleConfig[role].label}</Badge>
@@ -210,33 +210,33 @@ export default function TeamPage() {
       <Modal
         open={inviteOpen}
         onClose={() => { setInviteOpen(false); setInviteEmail(""); }}
-        title="Inviter un membre"
+        title={t.team.inviteTitle}
         footer={
           <>
-            <Button variant="secondary" onClick={() => setInviteOpen(false)}>Annuler</Button>
-            <Button loading={inviting} onClick={handleInvite}>Envoyer l&apos;invitation</Button>
+            <Button variant="secondary" onClick={() => setInviteOpen(false)}>{t.actions.cancel}</Button>
+            <Button loading={inviting} onClick={handleInvite}>{t.team.sendInvitation}</Button>
           </>
         }
       >
         <div className="space-y-4">
           <Input
-            label="Adresse email"
+            label={t.team.emailAddress}
             type="email"
             value={inviteEmail}
             onChange={(e) => setInviteEmail(e.target.value)}
             placeholder="collègue@exemple.com"
           />
           <Select
-            label="Rôle"
+            label={t.team.role}
             value={inviteRole}
             onChange={(e) => setInviteRole(e.target.value as TeamRole)}
           >
-            <option value="admin">Admin</option>
-            <option value="confirmer">Confirmeur</option>
-            <option value="agent">Agent</option>
+            <option value="admin">{t.team.roles.admin}</option>
+            <option value="confirmer">{t.team.roles.confirmer}</option>
+            <option value="agent">{t.team.roles.agent}</option>
           </Select>
           <div className="bg-background rounded-lg p-3 text-xs text-muted-foreground">
-            Un email d&apos;invitation sera envoyé à cette adresse.
+            {t.team.inviteNote}
           </div>
         </div>
       </Modal>

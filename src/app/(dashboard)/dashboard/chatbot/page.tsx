@@ -9,22 +9,10 @@ import { getWilayaName } from "@/constants/wilayas";
 import { Badge } from "@/components/ui/Badge";
 import { toast } from "sonner";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
-
-const statusConfig = {
-  bot: { label: "Bot", variant: "success" as const },
-  human_takeover: { label: "Handoff", variant: "danger" as const },
-  open: { label: "Ouvert", variant: "warning" as const },
-  resolved: { label: "Résolu", variant: "muted" as const },
-};
-
-const channelConfig = {
-  messenger: { label: "Messenger", color: "text-blue-400" },
-  instagram: { label: "Instagram", color: "text-purple" },
-  web: { label: "Web", color: "text-accent" },
-  manual: { label: "Manuel", color: "text-muted-foreground" },
-};
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function ChatbotPage() {
+  const { t } = useLanguage();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConv, setActiveConv] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -37,6 +25,13 @@ export default function ChatbotPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const supabase = getSupabaseBrowserClient();
   const { activeWorkspace } = useWorkspace();
+
+  const statusConfig = {
+    bot: { label: "Bot", variant: "success" as const },
+    human_takeover: { label: "Handoff", variant: "danger" as const },
+    open: { label: t.chatbot.filterAll, variant: "warning" as const },
+    resolved: { label: t.chatbot.resolve, variant: "muted" as const },
+  };
 
   const fetchConversations = useCallback(async () => {
     if (!activeWorkspace) return;
@@ -69,7 +64,6 @@ export default function ChatbotPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, streamingText]);
 
-  // Realtime subscription for messages
   useEffect(() => {
     if (!activeConv) return;
     const channel = supabase
@@ -130,7 +124,7 @@ export default function ChatbotPage() {
       .update({ status: "human_takeover" })
       .eq("id", activeConv.id);
     setActiveConv((prev) => prev ? { ...prev, status: "human_takeover" } : prev);
-    toast.success("Vous avez pris le contrôle de la conversation");
+    toast.success(t.chatbot.handoffActive);
     fetchConversations();
   }
 
@@ -145,14 +139,12 @@ export default function ChatbotPage() {
       return (c.customer_name ?? "").toLowerCase().includes(search.toLowerCase());
     });
 
-  // Sort: handoff first
   const sorted = [...filtered].sort((a, b) => {
     if (a.status === "human_takeover" && b.status !== "human_takeover") return -1;
     if (b.status === "human_takeover" && a.status !== "human_takeover") return 1;
     return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
   });
 
-  // On mobile: show list when no active conv, show chat when one is selected
   const showList = !activeConv;
 
   return (
@@ -161,7 +153,7 @@ export default function ChatbotPage() {
       <div className={`${showList ? "flex" : "hidden"} md:flex w-full md:w-72 flex-shrink-0 border-r border-border flex-col bg-sidebar`}>
         <div className="p-4 border-b border-border space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-white text-sm">Conversations</h2>
+            <h2 className="font-semibold text-white text-sm">{t.chatbot.allConversations}</h2>
             <button onClick={fetchConversations} className="text-muted-foreground hover:text-white">
               <RefreshCw size={13} />
             </button>
@@ -170,7 +162,7 @@ export default function ChatbotPage() {
             <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted" />
             <input
               type="text"
-              placeholder="Rechercher…"
+              placeholder={t.chatbot.searchPlaceholder}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full bg-background border border-border rounded-lg pl-7 pr-3 py-1.5 text-xs text-white placeholder:text-muted outline-none focus:border-accent"
@@ -185,7 +177,7 @@ export default function ChatbotPage() {
                   filter === f ? "bg-accent text-white" : "text-muted-foreground hover:text-white"
                 }`}
               >
-                {f === "all" ? "Tous" : f === "human_takeover" ? "Handoff" : "Bot"}
+                {f === "all" ? t.chatbot.filterAll : f === "human_takeover" ? t.chatbot.handoff : "Bot"}
               </button>
             ))}
           </div>
@@ -193,9 +185,9 @@ export default function ChatbotPage() {
 
         <div className="flex-1 overflow-y-auto">
           {loadingConvs ? (
-            <div className="p-4 text-center text-muted-foreground text-xs">Chargement…</div>
+            <div className="p-4 text-center text-muted-foreground text-xs">{t.actions.loading}</div>
           ) : sorted.length === 0 ? (
-            <div className="p-4 text-center text-muted-foreground text-xs">Aucune conversation</div>
+            <div className="p-4 text-center text-muted-foreground text-xs">{t.chatbot.noConversations}</div>
           ) : (
             sorted.map((conv) => {
               const isHandoff = conv.status === "human_takeover";
@@ -233,14 +225,13 @@ export default function ChatbotPage() {
           <div className="flex-1 flex items-center justify-center text-muted-foreground">
             <div className="text-center">
               <MessageSquare size={40} className="mx-auto mb-3 opacity-30" />
-              <p className="text-sm">Sélectionnez une conversation</p>
+              <p className="text-sm">{t.chatbot.selectConversation}</p>
             </div>
           </div>
         ) : (
           <>
             {/* Chat header */}
             <div className="px-3 md:px-5 py-3.5 border-b border-border flex items-center gap-3 justify-between bg-card">
-              {/* Back button — mobile only */}
               <button
                 className="md:hidden w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 text-muted-foreground hover:text-white flex-shrink-0"
                 onClick={() => setActiveConv(null)}
@@ -250,7 +241,7 @@ export default function ChatbotPage() {
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-white truncate">{activeConv.customer_name ?? "Client"}</p>
                 <p className="text-xs text-muted-foreground">
-                  {channelConfig[activeConv.channel]?.label} · {activeConv.language_detected}
+                  {activeConv.channel} · {activeConv.language_detected}
                   {activeConv.wilaya_code ? ` · ${getWilayaName(activeConv.wilaya_code)}` : ""}
                 </p>
               </div>
@@ -260,12 +251,12 @@ export default function ChatbotPage() {
                     onClick={takeover}
                     className="text-xs px-3 py-1.5 rounded-lg border border-orange/30 text-orange bg-orange-muted hover:bg-orange/20 transition-colors"
                   >
-                    Prendre le contrôle
+                    {t.chatbot.takeover}
                   </button>
                 )}
                 {activeConv.status === "human_takeover" && (
                   <span className="text-xs px-3 py-1.5 rounded-lg bg-danger-muted text-danger border border-danger/20">
-                    Handoff actif
+                    {t.chatbot.handoffActive}
                   </span>
                 )}
               </div>
@@ -276,7 +267,7 @@ export default function ChatbotPage() {
               <div className="px-5 py-2.5 bg-orange-muted border-b border-orange/20 flex items-center gap-2">
                 <User size={14} className="text-orange" />
                 <p className="text-xs text-orange font-medium">
-                  Un agent humain a pris le contrôle de cette conversation
+                  {t.chatbot.handoffBanner}
                 </p>
               </div>
             )}
@@ -285,7 +276,7 @@ export default function ChatbotPage() {
             <div className="flex-1 overflow-y-auto p-5 space-y-3">
               {messages.length === 0 && !streaming && (
                 <div className="text-center text-muted-foreground text-sm py-8">
-                  Aucun message
+                  {t.chatbot.noMessages}
                 </div>
               )}
               {messages.map((msg) => (
@@ -317,7 +308,6 @@ export default function ChatbotPage() {
                 </div>
               ))}
 
-              {/* Streaming response */}
               {streaming && streamingText && (
                 <div className="flex justify-start">
                   <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mr-2 mt-1 bg-accent-muted">
@@ -358,7 +348,7 @@ export default function ChatbotPage() {
                       sendMessage();
                     }
                   }}
-                  placeholder="Répondre… (Entrée pour envoyer)"
+                  placeholder={t.chatbot.replyPlaceholder}
                   rows={2}
                   className="flex-1 bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-muted outline-none focus:border-accent resize-none"
                 />
@@ -375,12 +365,12 @@ export default function ChatbotPage() {
         )}
       </div>
 
-      {/* Right: Customer info panel — hidden on mobile */}
+      {/* Right: Customer info panel */}
       <div className="hidden lg:flex w-64 flex-shrink-0 border-l border-border bg-sidebar flex-col">
         {activeConv ? (
           <div className="p-4 space-y-4 overflow-y-auto">
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Info client
+              {t.chatbot.customerInfo}
             </h3>
 
             <div className="flex items-center gap-3">
@@ -411,45 +401,45 @@ export default function ChatbotPage() {
 
             <div className="pt-2 border-t border-border space-y-2">
               <div className="flex justify-between text-xs">
-                <span className="text-muted-foreground">Canal</span>
+                <span className="text-muted-foreground">{t.chatbot.channel}</span>
                 <span className="text-white capitalize">{activeConv.channel}</span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-muted-foreground">Langue</span>
+                <span className="text-muted-foreground">{t.chatbot.detectedLanguage}</span>
                 <span className="text-white">{activeConv.language_detected}</span>
               </div>
             </div>
 
             <div className="pt-2 border-t border-border space-y-2">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Actions rapides
+                {t.chatbot.quickActions}
               </p>
               <button className="w-full text-left text-xs px-3 py-2 rounded-lg bg-accent-muted text-accent hover:bg-accent/20 transition-colors">
-                Créer une commande
+                {t.chatbot.createOrder}
               </button>
               <button
                 onClick={takeover}
                 className="w-full text-left text-xs px-3 py-2 rounded-lg bg-orange-muted text-orange hover:bg-orange/20 transition-colors"
               >
-                Prendre le contrôle
+                {t.chatbot.takeover}
               </button>
               <button
                 onClick={async () => {
                   await supabase.from("conversations").update({ status: "resolved" }).eq("id", activeConv.id);
-                  toast.success("Conversation résolue");
+                  toast.success(t.chatbot.resolve);
                   fetchConversations();
                   setActiveConv(null);
                 }}
                 className="w-full text-left text-xs px-3 py-2 rounded-lg bg-success-muted text-success hover:bg-success/20 transition-colors"
               >
-                Marquer comme résolu
+                {t.chatbot.markResolved}
               </button>
             </div>
           </div>
         ) : (
           <div className="flex-1 flex items-center justify-center p-4">
             <p className="text-xs text-muted-foreground text-center">
-              Sélectionnez une conversation pour voir les détails
+              {t.chatbot.selectDetails}
             </p>
           </div>
         )}

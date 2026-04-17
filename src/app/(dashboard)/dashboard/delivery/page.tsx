@@ -11,22 +11,10 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { toast } from "sonner";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
-
-const statusConfig: Record<
-  ParcelStatus,
-  { label: string; variant: "warning" | "blue" | "orange" | "purple" | "success" | "danger" | "muted" }
-> = {
-  pending_pickup: { label: "Attente collecte", variant: "warning" },
-  picked_up: { label: "Récupéré", variant: "blue" },
-  in_transit: { label: "En transit", variant: "orange" },
-  out_for_delivery: { label: "En livraison", variant: "purple" },
-  delivered: { label: "Livré", variant: "success" },
-  failed_attempt: { label: "Échec", variant: "danger" },
-  returned_to_sender: { label: "Retourné", variant: "danger" },
-  lost: { label: "Perdu", variant: "muted" },
-};
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function DeliveryPage() {
+  const { t } = useLanguage();
   const [parcels, setParcels] = useState<DeliveryParcel[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
@@ -35,6 +23,20 @@ export default function DeliveryPage() {
   const [filterCarrier, setFilterCarrier] = useState("all");
   const supabase = getSupabaseBrowserClient();
   const { activeWorkspace } = useWorkspace();
+
+  const statusConfig: Record<
+    ParcelStatus,
+    { label: string; variant: "warning" | "blue" | "orange" | "purple" | "success" | "danger" | "muted" }
+  > = {
+    pending_pickup: { label: t.delivery.pendingPickup, variant: "warning" },
+    picked_up: { label: t.delivery.pickedUp, variant: "blue" },
+    in_transit: { label: t.delivery.inTransit, variant: "orange" },
+    out_for_delivery: { label: t.delivery.outForDelivery, variant: "purple" },
+    delivered: { label: t.delivery.delivered, variant: "success" },
+    failed_attempt: { label: t.delivery.failedAttempt, variant: "danger" },
+    returned_to_sender: { label: t.delivery.returnedToSender, variant: "danger" },
+    lost: { label: t.delivery.lost, variant: "muted" },
+  };
 
   const fetchParcels = useCallback(async () => {
     if (!activeWorkspace) return;
@@ -64,7 +66,6 @@ export default function DeliveryPage() {
     fetchParcels();
   }
 
-  // Compute stats
   const total = parcels.length;
   const delivered = parcels.filter((p) => p.status === "delivered").length;
   const inTransit = parcels.filter((p) => ["in_transit", "out_for_delivery", "picked_up"].includes(p.status)).length;
@@ -77,10 +78,8 @@ export default function DeliveryPage() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-white">Livraison</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Suivi de tous vos colis
-          </p>
+          <h1 className="text-xl font-bold text-white">{t.delivery.title}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{t.delivery.subtitle}</p>
         </div>
         <Button
           variant="secondary"
@@ -89,18 +88,18 @@ export default function DeliveryPage() {
           onClick={syncAll}
           loading={syncing}
         >
-          Synchroniser
+          {t.delivery.syncAll}
         </Button>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
         {[
-          { label: "Total envoyés", value: total, color: "text-white" },
-          { label: "Livrés", value: delivered, color: "text-success" },
-          { label: "En transit", value: inTransit, color: "text-orange" },
-          { label: "Retournés", value: returned, color: "text-danger" },
-          { label: "Taux livraison", value: `${deliveryRate}%`, color: "text-accent" },
+          { label: t.delivery.totalSent, value: total, color: "text-white" },
+          { label: t.delivery.delivered, value: delivered, color: "text-success" },
+          { label: t.delivery.inTransit, value: inTransit, color: "text-orange" },
+          { label: t.delivery.returned, value: returned, color: "text-danger" },
+          { label: t.delivery.deliveryRateLabel, value: `${deliveryRate}%`, color: "text-accent" },
         ].map((stat) => (
           <div key={stat.label} className="bg-card border border-border rounded-xl p-4">
             <p className="text-xs text-muted-foreground mb-1">{stat.label}</p>
@@ -116,7 +115,7 @@ export default function DeliveryPage() {
           onChange={(e) => setFilterStatus(e.target.value as "all" | ParcelStatus)}
           className="bg-card border border-border rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-accent"
         >
-          <option value="all">Tous statuts</option>
+          <option value="all">{t.delivery.allStatuses}</option>
           {Object.entries(statusConfig).map(([k, v]) => (
             <option key={k} value={k}>{v.label}</option>
           ))}
@@ -127,7 +126,7 @@ export default function DeliveryPage() {
           onChange={(e) => setFilterCarrier(e.target.value)}
           className="bg-card border border-border rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-accent"
         >
-          <option value="all">Tous transporteurs</option>
+          <option value="all">{t.delivery.allCarriers}</option>
           {carriers.map((c) => (
             <option key={c} value={c}>{c}</option>
           ))}
@@ -140,14 +139,14 @@ export default function DeliveryPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-border">
-                  <th className="text-left py-3 px-4 text-xs text-muted-foreground font-medium whitespace-nowrap">N° suivi</th>
-                <th className="text-left py-3 px-4 text-xs text-muted-foreground font-medium">Client</th>
-                <th className="hidden md:table-cell text-left py-3 px-4 text-xs text-muted-foreground font-medium">Wilaya</th>
-                <th className="hidden lg:table-cell text-left py-3 px-4 text-xs text-muted-foreground font-medium">Produit</th>
-                <th className="hidden md:table-cell text-left py-3 px-4 text-xs text-muted-foreground font-medium">Transporteur</th>
-                <th className="hidden sm:table-cell text-left py-3 px-4 text-xs text-muted-foreground font-medium">COD</th>
-                <th className="text-left py-3 px-4 text-xs text-muted-foreground font-medium">Statut</th>
-                <th className="hidden lg:table-cell text-left py-3 px-4 text-xs text-muted-foreground font-medium whitespace-nowrap">Date</th>
+                <th className="text-left py-3 px-4 text-xs text-muted-foreground font-medium whitespace-nowrap">{t.delivery.tracking}</th>
+                <th className="text-left py-3 px-4 text-xs text-muted-foreground font-medium">{t.orders.customer}</th>
+                <th className="hidden md:table-cell text-left py-3 px-4 text-xs text-muted-foreground font-medium">{t.orders.wilaya}</th>
+                <th className="hidden lg:table-cell text-left py-3 px-4 text-xs text-muted-foreground font-medium">{t.orders.product}</th>
+                <th className="hidden md:table-cell text-left py-3 px-4 text-xs text-muted-foreground font-medium">{t.delivery.carrier}</th>
+                <th className="hidden sm:table-cell text-left py-3 px-4 text-xs text-muted-foreground font-medium">{t.delivery.cod}</th>
+                <th className="text-left py-3 px-4 text-xs text-muted-foreground font-medium">{t.orders.source}</th>
+                <th className="hidden lg:table-cell text-left py-3 px-4 text-xs text-muted-foreground font-medium whitespace-nowrap">{t.orders.date}</th>
                 <th className="py-3 px-4"></th>
               </tr>
             </thead>
@@ -155,14 +154,14 @@ export default function DeliveryPage() {
               {loading ? (
                 <tr>
                   <td colSpan={9} className="py-12 text-center text-muted-foreground text-sm">
-                    Chargement…
+                    {t.actions.loading}
                   </td>
                 </tr>
               ) : parcels.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="py-12 text-center text-muted-foreground text-sm">
                     <Package size={32} className="mx-auto mb-3 opacity-20" />
-                    Aucun colis
+                    {t.delivery.noParcel}
                   </td>
                 </tr>
               ) : (
@@ -202,7 +201,7 @@ export default function DeliveryPage() {
                           onClick={(e) => { e.stopPropagation(); setSelectedParcel(parcel); }}
                           className="text-xs px-2 py-1 rounded bg-accent-muted text-accent hover:bg-accent/20 transition-colors"
                         >
-                          Détails
+                          {t.delivery.details}
                         </button>
                       </td>
                     </tr>
@@ -214,33 +213,33 @@ export default function DeliveryPage() {
         </div>
       </div>
 
-      {/* Parcel detail modal with tracking timeline */}
+      {/* Parcel detail modal */}
       <Modal
         open={!!selectedParcel}
         onClose={() => setSelectedParcel(null)}
-        title={`Colis ${selectedParcel?.tracking_number}`}
+        title={`${t.delivery.parcel} ${selectedParcel?.tracking_number}`}
       >
         {selectedParcel && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <p className="text-muted-foreground text-xs mb-0.5">Destinataire</p>
+                <p className="text-muted-foreground text-xs mb-0.5">{t.delivery.recipient}</p>
                 <p className="text-white font-medium">{selectedParcel.recipient_name}</p>
                 <p className="text-muted-foreground">{selectedParcel.recipient_phone}</p>
               </div>
               <div>
-                <p className="text-muted-foreground text-xs mb-0.5">Wilaya</p>
+                <p className="text-muted-foreground text-xs mb-0.5">{t.orders.wilaya}</p>
                 <p className="text-white">
                   {selectedParcel.wilaya_code ? getWilayaName(selectedParcel.wilaya_code) : "—"}
                 </p>
                 {selectedParcel.commune && <p className="text-muted-foreground">{selectedParcel.commune}</p>}
               </div>
               <div>
-                <p className="text-muted-foreground text-xs mb-0.5">Transporteur</p>
+                <p className="text-muted-foreground text-xs mb-0.5">{t.delivery.carrier}</p>
                 <p className="text-white capitalize">{selectedParcel.carrier}</p>
               </div>
               <div>
-                <p className="text-muted-foreground text-xs mb-0.5">COD</p>
+                <p className="text-muted-foreground text-xs mb-0.5">{t.delivery.cod}</p>
                 <p className="text-white font-medium">
                   {selectedParcel.cod_amount ? formatDA(selectedParcel.cod_amount) : "—"}
                 </p>
@@ -251,7 +250,7 @@ export default function DeliveryPage() {
             {selectedParcel.status_history && selectedParcel.status_history.length > 0 && (
               <div>
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                  Historique
+                  {t.delivery.timeline}
                 </p>
                 <div className="relative pl-4 space-y-4">
                   <div className="absolute left-1.5 top-2 bottom-2 w-px bg-border" />

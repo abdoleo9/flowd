@@ -118,18 +118,24 @@ Return ONLY the raw HTML. No markdown, no explanation, no backticks.
 
   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
-  const contentParts: (string | { inlineData: { data: string; mimeType: string } })[] = [];
+  let html_content: string;
+  try {
+    type Part = { text: string } | { inlineData: { data: string; mimeType: string } };
+    const contentParts: Part[] = [];
+    if (imageBase64 && mimeType) {
+      contentParts.push({ inlineData: { data: imageBase64, mimeType } });
+    }
+    contentParts.push({ text: prompt });
 
-  if (imageBase64 && mimeType) {
-    contentParts.push({ inlineData: { data: imageBase64, mimeType } });
+    const result = await model.generateContent(contentParts);
+    html_content = result.response.text()
+      .replace(/^```html\n?/, '')
+      .replace(/\n?```$/, '')
+      .trim();
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: `Gemini error: ${msg}` }, { status: 500 });
   }
-  contentParts.push(prompt);
-
-  const result = await model.generateContent(contentParts);
-  const html_content = result.response.text()
-    .replace(/^```html\n?/, '')
-    .replace(/\n?```$/, '')
-    .trim();
 
   const { data: page, error } = await supabase
     .from('landing_pages')

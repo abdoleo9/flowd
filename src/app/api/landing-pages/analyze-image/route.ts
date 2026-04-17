@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
         mimeType: mimeType || 'image/jpeg',
       },
     },
-    `You are an expert Algerian e-commerce product analyst.
+    { text: `You are an expert Algerian e-commerce product analyst.
 
 Analyze this product photo and return a JSON object with these exact keys:
 - product_name: short commercial product name in French (2-5 words)

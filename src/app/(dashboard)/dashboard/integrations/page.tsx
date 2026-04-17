@@ -13,6 +13,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { toast } from "sonner";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface IntegrationDef {
@@ -995,11 +996,19 @@ function StandardModal({
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function IntegrationsPage() {
+  const { t } = useLanguage();
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [loading, setLoading] = useState(true);
   const [openDef, setOpenDef] = useState<IntegrationDef | null>(null);
   const supabase = getSupabaseBrowserClient();
   const { activeWorkspace } = useWorkspace();
+
+  const categoryLabels: Record<string, string> = {
+    "Messagerie": t.integrations.catMessaging,
+    "Boutique en ligne": t.integrations.catStore,
+    "Catalogue produits": t.integrations.catCatalog,
+    "Livraison": t.integrations.catDelivery,
+  };
 
   const fetchIntegrations = useCallback(async () => {
     if (!activeWorkspace) return;
@@ -1066,10 +1075,8 @@ export default function IntegrationsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-xl font-bold text-white">Intégrations</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          Connectez vos outils — le chatbot et la livraison s&apos;activent automatiquement
-        </p>
+        <h1 className="text-xl font-bold text-white">{t.integrations.title}</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">{t.integrations.subtitle}</p>
       </div>
 
       {CATEGORIES.map((category) => {
@@ -1077,7 +1084,7 @@ export default function IntegrationsPage() {
         return (
           <div key={category} className="space-y-3">
             <div>
-              <h2 className="text-sm font-semibold text-white uppercase tracking-wider">{category}</h2>
+              <h2 className="text-sm font-semibold text-white uppercase tracking-wider">{categoryLabels[category] ?? category}</h2>
               <p className="text-xs text-muted-foreground mt-0.5">{CATEGORY_DESCRIPTIONS[category]}</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -1105,11 +1112,11 @@ export default function IntegrationsPage() {
                             )}
                           </div>
                           {isActive ? (
-                            <Badge variant="success" dot>Connecté</Badge>
+                            <Badge variant="success" dot>{t.status.connected}</Badge>
                           ) : connected ? (
-                            <Badge variant="warning" dot>Inactif</Badge>
+                            <Badge variant="warning" dot>{t.status.inactive}</Badge>
                           ) : (
-                            <Badge variant="muted">Non connecté</Badge>
+                            <Badge variant="muted">{t.status.disconnected}</Badge>
                           )}
                         </div>
                       </div>
@@ -1133,7 +1140,7 @@ export default function IntegrationsPage() {
                         className="flex-1"
                         onClick={() => setOpenDef(def)}
                       >
-                        {isActive ? "Configurer" : "Connecter"}
+                        {isActive ? t.actions.configure : t.actions.connect}
                       </Button>
                       {isActive && (
                         <Button size="icon" variant="danger" onClick={() => handleDisconnect(def.type)}>

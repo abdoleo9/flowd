@@ -17,7 +17,23 @@
       "WebFetch(domain:jorgejrzz.medium.com)",
       "mcp__Desktop_Commander__list_directory",
       "Bash(xargs wc:*)",
-      "Bash(curl -s -w \"\\\\n\\\\nHTTP Status: %{http_code}\" \"https://flowd-nine.vercel.app/api/webhooks/meta?hub.mode=subscribe&hub.verify_token=flowd_webhook_2024&hub.challenge=123456789\")"
+      "Bash(curl -s -w \"\\\\n\\\\nHTTP Status: %{http_code}\" \"https://flowd-nine.vercel.app/api/webhooks/meta?hub.mode=subscribe&hub.verify_token=flowd_webhook_2024&hub.challenge=123456789\")",
+      "mcp__e2a17dc6-b6d7-4a51-8371-7de71872b675__deploy_to_vercel",
+      "Bash(vercel --version)",
+      "Bash(git -C \"/c/Users/Dell/Desktop/flowd 0.2\" remote -v)",
+      "Bash(git -C \"/c/Users/Dell/Desktop/flowd 0.2\" checkout main)",
+      "Bash(git -C \"/c/Users/Dell/Desktop/flowd 0.2\" merge claude/thirsty-sammet-ffafd9 --no-edit)",
+      "Bash(git -C \"/c/Users/Dell/Desktop/flowd 0.2\" branch -a)",
+      "Bash(git -C \"/c/Users/Dell/Desktop/flowd 0.2\" stash)",
+      "Bash(vercel --prod)",
+      "mcp__541c683d-c2ba-4d59-8f4c-00cc1e37a993__list_projects",
+      "mcp__541c683d-c2ba-4d59-8f4c-00cc1e37a993__apply_migration",
+      "mcp__e2a17dc6-b6d7-4a51-8371-7de71872b675__get_runtime_logs",
+      "mcp__e2a17dc6-b6d7-4a51-8371-7de71872b675__get_project",
+      "Bash(vercel env *)",
+      "mcp__e2a17dc6-b6d7-4a51-8371-7de71872b675__get_deployment_build_logs",
+      "Bash(git -C \"/c/Users/Dell/Desktop/flowd 0.2\" log --oneline -3)",
+      "Bash(git -C \"/c/Users/Dell/Desktop/flowd 0.2\" show HEAD:src/app/api/landing-pages/analyze-image/route.ts)"
     ]
   }
 }

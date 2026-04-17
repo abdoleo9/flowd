@@ -67,7 +67,10 @@ flowd 0.2/
 │   │   │       ├── integrations/page.tsx — Integration cards (Instagram, Messenger, Shopify, etc.)
 │   │   │       ├── delivery/page.tsx   — Parcel table + tracking timeline modal
 │   │   │       ├── team/page.tsx       — Members table, permissions grid, invite modal
+│   │   │       ├── landing-pages/page.tsx — AI landing page generator + pages list
 │   │   │       └── settings/page.tsx   — Inner nav: Business, Chatbot, Notifications, Profile, Password, Danger zone
+│   │   ├── p/
+│   │   │   └── [slug]/page.tsx         — Public product landing page (no auth required)
 │   │   ├── api/
 │   │   │   ├── auth/callback/route.ts       — Supabase OAuth callback
 │   │   │   ├── chatbot/route.ts             — Gemini streaming chat endpoint
@@ -79,6 +82,12 @@ flowd 0.2/
 │   │   │   ├── workspace/create/route.ts    — Create new workspace
 │   │   │   ├── workspace/switch/route.ts    — Switch active workspace
 │   │   │   ├── webhooks/meta/route.ts       — Instagram / Messenger webhook receiver
+│   │   │   ├── landing-pages/
+│   │   │   │   ├── route.ts                 — GET list pages, DELETE page
+│   │   │   │   ├── generate/route.ts        — Gemini generates full HTML landing page
+│   │   │   │   ├── order/route.ts           — Public: receive order from landing page form
+│   │   │   │   ├── analyze-image/route.ts   — Gemini vision auto-fill from product photo
+│   │   │   │   └── [id]/route.ts            — PATCH status (active/paused/archived)
 │   │   │   └── integrations/
 │   │   │       ├── analyze-style/route.ts   — Gemini style analysis from past messages
 │   │   │       └── validate/route.ts        — Validate integration credentials
@@ -133,7 +142,8 @@ flowd 0.2/
 │       └── wilayas.ts                   — All 58 Algerian wilayas
 ├── supabase/
 │   └── migrations/
-│       └── 001_initial_schema.sql       — Full DB schema
+│       ├── 001_initial_schema.sql       — Full DB schema
+│       └── 002_landing_pages.sql        — landing_pages table + RLS + increment functions
 ├── middleware.ts                        — Auth guard: redirects unauthenticated users, skips login for authed
 ├── next.config.mjs
 ├── tailwind.config.ts
@@ -309,6 +319,50 @@ npm run dev
 - Fixed lazy Groq init, exported `ChatbotConfig` types
 
 ---
+
+### 2026-04-17 — AI Landing Page Generator + Product Photo Upload
+
+**New feature: AI-powered product landing page generator**
+
+- **New table** `landing_pages` — migration `supabase/migrations/002_landing_pages.sql`
+  - Fields: `id`, `workspace_id`, `slug`, `product_name`, `product_description`, `product_price`, `product_images`, `html_content`, `status`, `views`, `orders_count`, `created_at`, `updated_at`
+  - RLS: public SELECT for active pages, workspace members manage their own pages
+  - SQL functions: `increment_landing_page_orders(page_id)`, `increment_landing_page_views(page_id)`
+
+- **New type** `LandingPage` in `src/types/database.ts`
+
+- **New i18n keys** `landingPages` section added to all 3 languages (fr/en/ar) in `src/lib/i18n.ts`
+
+- **New public route** `/p/[slug]` (`src/app/p/[slug]/page.tsx`)
+  - No auth required — publicly accessible
+  - Renders Gemini-generated HTML directly (dangerouslySetInnerHTML)
+  - Increments view count on each visit
+  - Full SEO metadata via `generateMetadata`
+
+- **New dashboard page** `/dashboard/landing-pages` (`src/app/(dashboard)/dashboard/landing-pages/page.tsx`)
+  - **Section A** — Create new page form:
+    - Product photo upload zone (drag & drop or click, max 5 MB, JPEG/PNG/WebP)
+    - "Auto-remplir avec l'IA" button: sends image to Gemini vision → auto-populates form fields
+    - Form: product name, description, price, category, target audience, key benefits, color picker, language toggle (FR/AR)
+    - "Générer avec l'IA ✨" button with rotating loading messages
+    - Success banner with public URL + copy link + preview on generation
+  - **Section B** — Pages table: status badge, views, orders count, date, copy/preview/pause/delete actions
+
+- **New API routes:**
+  - `POST /api/landing-pages/generate` — calls Gemini 2.5 Flash (multimodal if image provided) to generate full HTML landing page, saves to Supabase
+  - `POST /api/landing-pages/order` — public endpoint, receives order from embedded form → creates record in `orders` table with `source: 'manual'` and landing page note
+  - `POST /api/landing-pages/analyze-image` — Gemini vision analysis of product photo → returns `{ product_name, product_description, product_category, target_audience, key_benefits, suggested_color }`
+  - `GET /api/landing-pages` — list pages by workspace
+  - `DELETE /api/landing-pages?id=` — delete a page
+  - `PATCH /api/landing-pages/[id]` — update page status (active/paused/archived)
+
+- **Sidebar** updated: "Pages produit" nav item (Globe icon) added between Intégrations and Équipe
+
+- **Middleware** updated: `/p/*` routes bypass auth and are always publicly accessible
+
+- **Landing page embedded order form** hits `/api/landing-pages/order` → order flows into workspace `orders` table just like any other order
+
+*Last updated: 2026-04-17*
 
 ### 2026-04-14 — Chatbot prompt overhaul + remove Style Analysis
 

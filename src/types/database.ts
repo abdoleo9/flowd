@@ -103,6 +103,22 @@ export interface Integration {
   created_at: string;
 }
 
+export interface LandingPage {
+  id: string;
+  workspace_id: string;
+  slug: string;
+  product_name: string;
+  product_description: string;
+  product_price: number;
+  product_images: string[];
+  html_content: string;
+  status: 'active' | 'paused' | 'archived';
+  views: number;
+  orders_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface DeliveryParcel {
   id: string;
   workspace_id: string;

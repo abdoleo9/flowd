@@ -15,6 +15,7 @@ import {
   Users,
   Settings,
   X,
+  Globe,
 } from "lucide-react";
 
 export function Sidebar() {
@@ -28,6 +29,7 @@ export function Sidebar() {
     { href: "/dashboard/delivery", icon: Truck, label: t.nav.delivery },
     { href: "/dashboard/chatbot", icon: Bot, label: t.nav.chatbot },
     { href: "/dashboard/integrations", icon: Plug, label: t.nav.integrations },
+    { href: "/dashboard/landing-pages", icon: Globe, label: t.landingPages.landingPages },
     { href: "/dashboard/team", icon: Users, label: t.nav.team },
     { href: "/dashboard/settings", icon: Settings, label: t.nav.settings },
   ];

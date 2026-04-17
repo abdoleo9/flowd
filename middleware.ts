@@ -34,6 +34,10 @@ export async function middleware(request: NextRequest) {
   const isOnboarding = pathname.startsWith("/onboarding");
   const isAuth = pathname.startsWith("/login") || pathname.startsWith("/auth");
   const isLanding = pathname === "/" || pathname.startsWith("/landing");
+  const isPublicPage = pathname.startsWith("/p/");
+
+  // Public landing pages are always accessible
+  if (isPublicPage) return supabaseResponse;
 
   // Unauthenticated users cannot access dashboard or onboarding
   if (!user && (isDashboard || isOnboarding)) {

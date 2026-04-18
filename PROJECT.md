@@ -320,6 +320,15 @@ npm run dev
 
 ---
 
+### 2026-04-18 — Landing page generator redesign (premium Dribbble-quality output)
+- Completely rewrote the Gemini prompt in `/api/landing-pages/generate/route.ts`
+- New prompt enforces a 9-section premium layout: sticky navbar, hero with product image, social proof bar, benefits cards, about-product (2-col), how-it-works steps, star-rated testimonials with avatar initials, split order form (product summary + form), multi-column footer
+- Added design system spec: CSS custom properties, proper typography scale (clamp), card shadows, hover animations, scroll-triggered fade-in via IntersectionObserver
+- Added full mobile responsive breakpoint (768px, all grids collapse to 1 column)
+- Testimonials now use CSS avatar circles with initials + realistic Algerian names/cities
+- All UI strings externalized into a translation map (French/Arabic) before building the prompt
+- Product image (when provided) embedded as base64 in both hero and about sections
+
 ### 2026-04-17 — AI Landing Page Generator + Product Photo Upload
 
 **New feature: AI-powered product landing page generator**

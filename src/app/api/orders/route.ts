@@ -64,13 +64,19 @@ export async function PATCH(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const workspaceId = await getActiveWorkspaceId();
+  if (!workspaceId) return NextResponse.json({ error: "No workspace" }, { status: 403 });
+
   const body = await request.json();
   const { id, ...updates } = body;
+
+  if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
   const { data, error } = await supabase
     .from("orders")
     .update(updates)
     .eq("id", id)
+    .eq("workspace_id", workspaceId)
     .select()
     .single();
 

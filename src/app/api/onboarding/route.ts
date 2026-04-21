@@ -56,12 +56,9 @@ export async function POST(request: NextRequest) {
       phone: phone?.trim() ?? null,
       wilaya_code: wilayaCode ? parseInt(wilayaCode) : null,
       chatbot_config: {
-        persona: "Assistant sympathique et professionnel",
-        language_mode: "auto",
-        greeting: "Marhba! Kifach naaawnek?",
-        order_instructions:
-          "Quand le client veut commander, demande: nom complet, numéro de téléphone, wilaya, adresse, produit(s). Confirme ensuite le récapitulatif.",
-        languages: { darija: true, french: true, english: true, arabic: false },
+        product_category: "produits",
+        delivery_days: "3 à 7",
+        payment_methods: "الدفع عند الاستلام",
       },
     })
     .select("id")

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { getGroq, GROQ_MODEL, detectLanguage, buildSystemPrompt } from "@/lib/groq";
+import { getGroq, GROQ_MODEL, buildSystemPrompt } from "@/lib/groq";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -84,16 +84,14 @@ export async function POST(req: NextRequest) {
       // ── Load workspace chatbot config ──────────────────────────────────────
       const { data: workspace } = await supabaseAdmin
         .from("workspaces")
-        .select("chatbot_config")
+        .select("chatbot_config, name")
         .eq("id", workspaceId)
         .single();
 
       const chatbotConfig = workspace?.chatbot_config ?? {
-        persona: "Assistant sympathique pour boutique e-commerce",
-        language_mode: "auto",
-        greeting: "Marhba !",
-        order_instructions: "Demande le nom complet, numéro de téléphone, wilaya et adresse.",
-        languages: { darija: true, french: true, english: true, arabic: false },
+        product_category: "produits",
+        delivery_days: "3 à 7",
+        payment_methods: "الدفع عند الاستلام",
       };
 
       // ── Find or create conversation ────────────────────────────────────────
@@ -161,8 +159,7 @@ export async function POST(req: NextRequest) {
         .limit(20);
 
       // ── Generate AI reply ──────────────────────────────────────────────────
-      const language = detectLanguage(messageText);
-      const systemPrompt = buildSystemPrompt(chatbotConfig, language);
+      const systemPrompt = buildSystemPrompt(chatbotConfig, workspace?.name ?? "La Boutique");
 
       let replyText = "";
       try {

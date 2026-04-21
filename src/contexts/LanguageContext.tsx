@@ -21,13 +21,21 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLangState] = useState<Language>("fr");
 
   useEffect(() => {
-    const stored = localStorage.getItem("flowd_lang") as Language | null;
-    if (stored && translations[stored]) setLangState(stored);
+    try {
+      const stored = localStorage.getItem("flowd_lang") as Language | null;
+      if (stored && translations[stored]) setLangState(stored);
+    } catch {
+      // localStorage unavailable (private browsing, etc.)
+    }
   }, []);
 
   function setLang(l: Language) {
     setLangState(l);
-    localStorage.setItem("flowd_lang", l);
+    try {
+      localStorage.setItem("flowd_lang", l);
+    } catch {
+      // localStorage unavailable
+    }
     const dir = LANGUAGES.find((x) => x.code === l)?.dir ?? "ltr";
     document.documentElement.setAttribute("dir", dir);
     document.documentElement.setAttribute("lang", l);

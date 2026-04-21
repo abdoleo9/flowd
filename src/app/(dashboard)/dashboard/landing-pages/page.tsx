@@ -56,6 +56,17 @@ export default function LandingPagesPage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const loadingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const imagePreviewRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    imagePreviewRef.current = imagePreview;
+  }, [imagePreview]);
+
+  useEffect(() => {
+    return () => {
+      if (imagePreviewRef.current) URL.revokeObjectURL(imagePreviewRef.current);
+    };
+  }, []);
 
   const fetchPages = useCallback(async () => {
     if (!workspace?.id) return;
@@ -89,9 +100,12 @@ export default function LandingPagesPage() {
   }, [generating]);
 
   function handleFileChange(file: File | null) {
+    setImagePreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
     if (!file) {
       setProductImage(null);
-      setImagePreview(null);
       return;
     }
     if (file.size > 5 * 1024 * 1024) {

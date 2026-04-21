@@ -75,7 +75,10 @@ export default function ChatbotPage() {
         filter: `conversation_id=eq.${activeConv.id}`,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       }, (payload: any) => {
-        setMessages((prev) => [...prev, payload.new as Message]);
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === (payload.new as Message).id)) return prev;
+          return [...prev, payload.new as Message];
+        });
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
@@ -114,7 +117,7 @@ export default function ChatbotPage() {
 
     setStreamingText("");
     setStreaming(false);
-    fetchMessages(activeConv.id);
+    // Realtime subscription delivers the saved messages — no manual refetch needed
   }
 
   async function takeover() {

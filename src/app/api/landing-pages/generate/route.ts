@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+import { getGenAI } from '@/lib/claude';
 
 const WILAYAS = `Adrar,Chlef,Laghouat,Oum El Bouaghi,Batna,Béjaïa,Biskra,Béchar,Blida,Bouira,Tamanrasset,Tébessa,Tlemcen,Tiaret,Tizi Ouzou,Alger,Djelfa,Jijel,Sétif,Saïda,Skikda,Sidi Bel Abbès,Annaba,Guelma,Constantine,Médéa,Mostaganem,M'Sila,Mascara,Ouargla,Oran,El Bayadh,Illizi,Bordj Bou Arréridj,Boumerdès,El Tarf,Tindouf,Tissemsilt,El Oued,Khenchela,Souk Ahras,Tipaza,Mila,Aïn Defla,Naâma,Aïn Témouchent,Ghardaïa,Relizane,El M'Ghair,El Menia,Ouled Djellal,Bordj Baji Mokhtar,Béni Abbès,Timimoun,Touggourt,Djanet,In Salah,In Guezzam`;
 
@@ -159,7 +157,7 @@ BUILD THESE 9 SECTIONS IN ORDER:
 END WITH:
 ${js}`;
 
-  const model = genAI.getGenerativeModel(
+  const model = getGenAI().getGenerativeModel(
     { model: 'gemini-2.5-flash' },
     { apiVersion: 'v1beta' }
   );

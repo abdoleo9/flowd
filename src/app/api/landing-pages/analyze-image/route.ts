@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+import { getGenAI } from '@/lib/claude';
 
 export async function POST(req: NextRequest) {
   const supabase = getSupabaseServerClient();
@@ -11,7 +9,7 @@ export async function POST(req: NextRequest) {
 
   const { imageBase64, mimeType } = await req.json();
 
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.5-flash' });
 
   try {
     const result = await model.generateContent([

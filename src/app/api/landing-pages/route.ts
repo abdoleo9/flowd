@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
+import { getActiveWorkspaceId } from '@/lib/active-workspace';
 
 export async function GET(req: NextRequest) {
   const supabase = getSupabaseServerClient();
@@ -25,6 +26,9 @@ export async function DELETE(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const workspaceId = await getActiveWorkspaceId();
+  if (!workspaceId) return NextResponse.json({ error: 'No workspace' }, { status: 403 });
+
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 });
@@ -32,7 +36,8 @@ export async function DELETE(req: NextRequest) {
   const { error } = await supabase
     .from('landing_pages')
     .delete()
-    .eq('id', id);
+    .eq('id', id)
+    .eq('workspace_id', workspaceId);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ success: true });

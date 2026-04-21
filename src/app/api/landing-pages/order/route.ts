@@ -6,6 +6,16 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const { customer_name, customer_phone, wilaya, commune, quantity, notes, page_slug } = body;
 
+  if (
+    !customer_name?.trim() ||
+    !customer_phone?.trim() ||
+    !wilaya?.trim() ||
+    !commune?.trim() ||
+    !page_slug?.trim()
+  ) {
+    return NextResponse.json({ success: false, error: 'Champs obligatoires manquants' }, { status: 400 });
+  }
+
   const { data: page, error: pageError } = await supabase
     .from('landing_pages')
     .select('id, workspace_id, product_name, product_price')

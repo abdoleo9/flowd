@@ -397,3 +397,28 @@ npm run dev
 - **Updated** `/api/chatbot/route.ts`: now selects `name` from workspace and passes it as `storeName` to the prompt
 
 *Last updated: 2026-04-14*
+
+---
+
+### 2026-04-21 — Full codebase bug scan & fixes (9 bugs fixed)
+
+**CRITICAL**
+- `src/app/api/webhooks/meta/route.ts`: Fixed `buildSystemPrompt` called with wrong arguments — was passing detected language string (`"darija"`) as the `storeName` parameter, causing all Meta webhook chatbot replies to show store name as "darija"/"french". Now passes `workspace.name` correctly. Also removed unused `detectLanguage` import and updated fallback `chatbot_config` to current schema.
+
+**HIGH — Security**
+- `src/app/api/orders/route.ts` (PATCH): Added `workspace_id` ownership check — previously any authenticated user could update any order by ID.
+- `src/app/api/landing-pages/route.ts` (DELETE): Added `workspace_id` ownership check — previously any authenticated user could delete any landing page by ID.
+- `src/app/api/landing-pages/[id]/route.ts` (PATCH): Added `workspace_id` ownership check on status update.
+
+**HIGH — Build-time crash**
+- `src/app/api/landing-pages/generate/route.ts`: Replaced module-level `new GoogleGenerativeAI(...)` with lazy `getGenAI()` singleton from `@/lib/claude`. Module-level instantiation crashes `next build` when `GEMINI_API_KEY` is unset.
+- `src/app/api/landing-pages/analyze-image/route.ts`: Same fix.
+
+**MEDIUM — Logic / UX**
+- `src/app/(dashboard)/dashboard/chatbot/page.tsx`: Fixed duplicate messages in chat UI. Realtime `INSERT` handler now deduplicates by message ID. Removed redundant `fetchMessages()` call after streaming ends (Realtime already delivers saved messages).
+- `src/app/api/onboarding/route.ts`: Fixed `chatbot_config` created during onboarding — was using old schema (`persona`, `language_mode`, `greeting`, `order_instructions`, `languages`). Now uses current schema (`product_category`, `delivery_days`, `payment_methods`).
+- `src/app/api/landing-pages/order/route.ts`: Added input validation on all required fields (`customer_name`, `customer_phone`, `wilaya`, `commune`, `page_slug`) — this is a public unauthenticated endpoint.
+
+**LOW — Stability**
+- `src/contexts/LanguageContext.tsx`: Wrapped all `localStorage` calls in `try/catch` — throws in private browsing mode (Safari, Firefox strict).
+- `src/app/(dashboard)/dashboard/landing-pages/page.tsx`: Fixed object URL memory leak — previous preview URL now revoked before creating new one, and revoked on component unmount.

@@ -398,6 +398,18 @@ npm run dev
 
 *Last updated: 2026-04-14*
 
+### 2026-04-21 — Landing page redesign: new visual identity + dark mode + i18n
+
+- **Replaced** `src/app/landing/page.tsx` entirely with the new premium visual from `flowd_landing.html`
+- New design: clean light-mode blue/white (`#0052FF` brand), grid hero background, browser mockup dashboard, full sections (logos, features 3-col grid, how-it-works interactive steps, integrations 5-col, pricing 3 plans, testimonials, CTA)
+- **Dark / Light mode toggle** — moon/sun button in navbar; persisted to `localStorage`; CSS variables override via `[data-theme="dark"]` on root wrapper
+- **Trilingual i18n**: Darija (🇩🇿 Latin script — primary default), Français, English — `localStorage` persisted
+- **Mobile responsive**: hamburger menu, full responsive breakpoints (1024px / 768px / 400px), lang switcher in mobile menu
+- **All buttons connected**: Sign in → `/login`, all "Get started / Bda majani / Commencer" → `/login?tab=signup`
+- Pricing plan buttons: Starter + Growth → `/login?tab=signup`, Pro → `/login`
+- How-it-works: 4 interactive steps with live visual preview (dangerouslySetInnerHTML mockups)
+- SVG logo rendered as inline React component (blue in light mode, white in dark mode / sidebar / footer)
+
 ---
 
 ### 2026-04-21 — Full codebase bug scan & fixes (9 bugs fixed)

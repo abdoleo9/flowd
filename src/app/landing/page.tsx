@@ -1,1061 +1,993 @@
 "use client";
 
-import { Outfit, DM_Sans } from "next/font/google";
 import Link from "next/link";
-import { useEffect, useState, useRef } from "react";
-import { Check, Menu, X, Globe, ChevronDown } from "lucide-react";
+import { useEffect, useState } from "react";
 
-const outfit = Outfit({ subsets: ["latin"], weight: ["400", "600", "700", "800"] });
-const dmSans = DM_Sans({ subsets: ["latin"], weight: ["400", "500", "600"] });
+// ─── Logo path ────────────────────────────────────────────────────────────────
+const LOGO_D =
+  "M34.893 2.980 C 19.862 4.180,7.960 13.311,3.079 27.388 C 2.801 28.192,2.355 28.850,2.089 28.850 C 1.823 28.850,1.480 29.052,1.327 29.300 C 1.174 29.548,1.208 29.652,1.402 29.532 C 1.612 29.402,1.704 94.957,1.630 191.753 C 1.504 357.037,1.515 358.511,2.899 362.183 C 4.876 367.430,5.623 369.046,7.248 371.591 C 12.336 379.558,21.188 385.452,30.994 387.402 C 36.434 388.483,362.752 388.478,368.226 387.397 C 373.497 386.355,379.766 383.852,382.620 381.648 C 390.569 375.510,395.160 368.429,397.125 359.279 C 397.881 355.758,397.984 37.858,397.231 32.749 C 395.148 18.617,384.798 7.464,370.175 3.594 C 368.059 3.034,41.702 2.436,34.893 2.980 M319.923 71.779 C 320.708 72.646,321.116 124.497,320.359 127.207 C 319.830 129.102,322.484 129.048,229.917 129.043 C 159.500 129.039,141.701 129.137,141.445 129.529 C 141.268 129.799,141.135 134.318,141.148 139.571 C 141.161 144.825,141.162 158.987,141.151 171.044 L 141.131 192.964 140.141 193.613 C 139.240 194.203,136.466 194.264,109.491 194.290 L 79.831 194.319 79.082 193.394 C 78.357 192.499,78.337 191.602,78.445 165.143 L 78.558 137.817 79.831 135.379 C 84.396 126.639,87.213 125.923,117.013 125.933 C 128.591 125.937,138.227 125.839,138.427 125.715 C 138.645 125.580,138.793 117.096,138.795 104.558 L 138.799 83.626 139.754 81.575 C 142.315 76.073,146.944 72.180,151.876 71.378 C 152.935 71.206,191.012 71.042,236.492 71.014 L 319.184 70.962 319.923 71.779 M278.608 192.284 C 279.244 193.313,279.049 194.704,278.053 196.242 C 277.478 197.129,276.786 198.294,276.517 198.830 C 276.247 199.366,275.675 200.375,275.245 201.072 C 273.272 204.272,272.870 204.954,272.251 206.140 C 271.888 206.837,271.448 207.407,271.273 207.407 C 271.098 207.407,270.955 207.637,270.955 207.919 C 270.955 208.200,270.604 208.807,270.175 209.267 C 269.747 209.727,269.396 210.211,269.396 210.342 C 269.396 210.473,268.908 211.314,268.312 212.210 C 267.715 213.107,266.986 214.320,266.690 214.906 C 266.394 215.492,265.829 216.318,265.435 216.741 C 265.040 217.165,264.717 217.700,264.717 217.931 C 264.717 218.417,263.703 220.118,262.738 221.248 C 262.372 221.676,261.596 222.950,261.013 224.077 C 260.431 225.205,259.795 226.226,259.601 226.346 C 259.406 226.466,258.990 227.122,258.676 227.804 C 258.362 228.487,257.883 229.388,257.610 229.807 C 255.793 232.605,253.021 237.093,253.021 237.238 C 253.021 237.620,250.269 241.685,249.810 241.982 C 249.539 242.157,225.166 242.388,195.646 242.495 C 166.127 242.602,141.850 242.815,141.697 242.969 C 141.543 243.122,141.394 260.090,141.365 280.676 C 141.305 322.822,141.579 319.253,138.402 319.289 C 112.505 319.581,79.715 319.232,79.080 318.657 C 78.396 318.038,78.363 316.684,78.363 289.277 C 78.363 257.546,78.243 259.013,81.014 256.864 C 82.022 256.082,86.969 252.161,92.008 248.150 C 103.733 238.818,104.608 238.131,105.663 237.427 C 106.146 237.105,107.087 236.347,107.754 235.742 C 108.851 234.748,119.848 225.950,128.065 219.493 C 133.041 215.583,155.976 197.407,157.458 196.200 C 158.182 195.610,159.836 194.381,161.133 193.470 L 163.491 191.813 220.904 191.813 C 265.341 191.813,278.382 191.919,278.608 192.284";
 
-// ─── Translations ────────────────────────────────────────────────────────────
-const T = {
-  fr: {
-    dir: "ltr",
-    nav: { features: "Fonctionnalités", chatbot: "Chatbot IA", delivery: "Livraison", pricing: "Tarifs", login: "Se connecter", cta: "Commencer gratuitement" },
-    hero: {
-      badge: "Conçu pour le e-commerce algérien",
-      h1a: "Gérez tout votre",
-      h1b: "e-commerce",
-      h1c: "En un seul endroit.",
-      sub: "Commandes Instagram, Messenger et boutique en ligne — réunies dans un dashboard intelligent propulsé par l'IA.",
-      cta: "Commencer gratuitement →",
-      demo: "Voir la démo",
-      social: "Rejoignez les entrepreneurs algériens qui ont déjà transformé leur business",
-    },
-    problems: {
-      title: "Vous reconnaissez-vous ici ?",
-      cards: [
-        { icon: "😩", title: "Les commandes partout", desc: "Instagram, Messenger, votre boutique... vous perdez le fil entre les DMs, commentaires et messages." },
-        { icon: "📋", title: "Les formulaires de livraison", desc: "Remplir manuellement chaque bon de livraison, commande après commande. Des heures perdues chaque jour." },
-        { icon: "🤖", title: "Répondre à tout le monde", desc: "Clients qui demandent les prix, les tailles, les délais... à toute heure. Impossible de tout gérer seul." },
-      ],
-    },
-    features: {
-      label: "CE QUE FLOWD FAIT POUR VOUS",
-      title: "Un dashboard. Tout votre business.",
-      cards: [
-        { icon: "📦", title: "Toutes vos commandes", desc: "Instagram, Messenger et votre boutique réunies dans une seule liste en temps réel.", color: "#4361ee" },
-        { icon: "🤖", title: "Chatbot IA multilingue", desc: "Parle darija, français et anglais. Prend les commandes automatiquement, transfère à un humain quand nécessaire.", color: "#c97aff" },
-        { icon: "🚚", title: "Livraison en 1 clic", desc: "Yalidine, Ecotrack, Maystro... le formulaire se remplit tout seul. Zéro saisie manuelle.", color: "#3ecf8e" },
-        { icon: "📊", title: "Dashboard en temps réel", desc: "CA, taux de livraison, taux de retour par wilaya. Tout sous les yeux.", color: "#ffd43b" },
-        { icon: "🔗", title: "Toutes vos intégrations", desc: "Shopify, WooCommerce, Instagram, Google Sheets — connectez tout en quelques minutes.", color: "#4361ee" },
-        { icon: "👥", title: "Gestion d'équipe", desc: "Ajoutez des confirmateurs, des agents. Chacun voit ce dont il a besoin.", color: "#3ecf8e" },
-      ],
-    },
-    chatbot: {
-      label: "CHATBOT IA",
-      title: "Votre meilleur vendeur travaille 24h/24.",
-      desc: "Le chatbot flowd répond à vos clients comme un vrai humain — en darija, français ou anglais. Il prend les commandes, répond aux questions, et vous alerte quand il a besoin de vous.",
-      bullets: ["Détection automatique de la langue", "Prise de commande complète", "Transfert intelligent vers un agent", "Instructions personnalisées par vous"],
-    },
-    delivery: {
-      label: "LIVRAISON",
-      title: "Fini les formulaires. Un clic. C'est parti.",
-      desc: "Connectez Yalidine, Ecotrack, Maystro ou n'importe quelle société de livraison avec API. flowd remplit le bordereau automatiquement avec les données de la commande.",
-      stats: [{ stat: "0", label: "saisie manuelle" }, { stat: "48", label: "wilayas couvertes" }, { stat: "Live", label: "Suivi temps réel" }],
-    },
-    stats: [
-      { stat: "2 min", label: "Temps moyen pour traiter une commande" },
-      { stat: "0 DA", label: "Coût de remplissage des formulaires livraison" },
-      { stat: "24/7", label: "Le chatbot ne dort jamais" },
-      { stat: "58", label: "wilayas — Livraison partout en Algérie" },
-    ],
-    testimonial: { quote: "Avant flowd, je passais 3 heures par jour à remplir des formulaires Yalidine. Maintenant c'est 10 minutes.", name: "Amira K.", role: "Gérante de boutique en ligne, Blida" },
-    integrations: { title: "Connectez ce que vous utilisez déjà", sub: "D'autres intégrations arrivent bientôt." },
-    cta: { title: "Prêt à changer la façon dont vous gérez votre business ?", sub: "Rejoignez les entrepreneurs qui ont déjà automatisé leurs commandes, leur livraison et leur service client.", btn: "Commencer gratuitement →", note: "Aucune carte bancaire requise · Accès immédiat" },
-    footer: { tagline: "Le dashboard de la nouvelle génération.", copy: "© 2026 flowd. Tous droits réservés." },
-  },
-  en: {
-    dir: "ltr",
-    nav: { features: "Features", chatbot: "AI Chatbot", delivery: "Delivery", pricing: "Pricing", login: "Sign in", cta: "Get started free" },
-    hero: {
-      badge: "Built for Algerian e-commerce",
-      h1a: "Manage your entire",
-      h1b: "e-commerce",
-      h1c: "In one place.",
-      sub: "Instagram, Messenger and online store orders — all in one AI-powered dashboard.",
-      cta: "Get started free →",
-      demo: "Watch demo",
-      social: "Join Algerian entrepreneurs who have already transformed their business",
-    },
-    problems: {
-      title: "Does this sound familiar?",
-      cards: [
-        { icon: "😩", title: "Orders everywhere", desc: "Instagram, Messenger, your store... you lose track between DMs, comments and messages." },
-        { icon: "📋", title: "Delivery forms", desc: "Filling out each delivery slip manually, order after order. Hours wasted every day." },
-        { icon: "🤖", title: "Answering everyone", desc: "Customers asking about prices, sizes, delays... at all hours. Impossible to manage alone." },
-      ],
-    },
-    features: {
-      label: "WHAT FLOWD DOES FOR YOU",
-      title: "One dashboard. Your entire business.",
-      cards: [
-        { icon: "📦", title: "All your orders", desc: "Instagram, Messenger and your store unified in one real-time list.", color: "#4361ee" },
-        { icon: "🤖", title: "Multilingual AI chatbot", desc: "Speaks darija, French and English. Takes orders automatically, transfers to a human when needed.", color: "#c97aff" },
-        { icon: "🚚", title: "1-click delivery", desc: "Yalidine, Ecotrack, Maystro... the form fills itself. Zero manual entry.", color: "#3ecf8e" },
-        { icon: "📊", title: "Real-time dashboard", desc: "Revenue, delivery rate, return rate by wilaya. Everything at a glance.", color: "#ffd43b" },
-        { icon: "🔗", title: "All your integrations", desc: "Shopify, WooCommerce, Instagram, Google Sheets — connect everything in minutes.", color: "#4361ee" },
-        { icon: "👥", title: "Team management", desc: "Add confirmers, agents. Each person sees exactly what they need.", color: "#3ecf8e" },
-      ],
-    },
-    chatbot: {
-      label: "AI CHATBOT",
-      title: "Your best salesperson works 24/7.",
-      desc: "The flowd chatbot responds to your customers like a real human — in darija, French or English. It takes orders, answers questions, and alerts you when it needs you.",
-      bullets: ["Automatic language detection", "Complete order taking", "Smart transfer to an agent", "Custom instructions by you"],
-    },
-    delivery: {
-      label: "DELIVERY",
-      title: "No more forms. One click. Done.",
-      desc: "Connect Yalidine, Ecotrack, Maystro or any delivery company with API. flowd fills the slip automatically with the order data.",
-      stats: [{ stat: "0", label: "manual entry" }, { stat: "48", label: "wilayas covered" }, { stat: "Live", label: "Real-time tracking" }],
-    },
-    stats: [
-      { stat: "2 min", label: "Average time to process an order" },
-      { stat: "0 DA", label: "Cost of filling delivery forms" },
-      { stat: "24/7", label: "The chatbot never sleeps" },
-      { stat: "58", label: "wilayas — Delivery across Algeria" },
-    ],
-    testimonial: { quote: "Before flowd, I spent 3 hours a day filling Yalidine forms. Now it's 10 minutes.", name: "Amira K.", role: "Online store owner, Blida" },
-    integrations: { title: "Connect what you already use", sub: "More integrations coming soon." },
-    cta: { title: "Ready to change the way you manage your business?", sub: "Join entrepreneurs who have already automated their orders, delivery and customer service.", btn: "Get started free →", note: "No credit card required · Instant access" },
-    footer: { tagline: "The next-generation dashboard.", copy: "© 2026 flowd. All rights reserved." },
-  },
-  ar: {
-    dir: "rtl",
-    nav: { features: "المميزات", chatbot: "الذكاء الاصطناعي", delivery: "التوصيل", pricing: "الأسعار", login: "تسجيل الدخول", cta: "ابدأ مجاناً" },
-    hero: {
-      badge: "مصمم للتجارة الإلكترونية الجزائرية",
-      h1a: "أدر كل تجارتك",
-      h1b: "الإلكترونية",
-      h1c: "في مكان واحد.",
-      sub: "طلبات إنستغرام وماسنجر والمتجر الإلكتروني — كلها في لوحة تحكم ذكية مدعومة بالذكاء الاصطناعي.",
-      cta: "ابدأ مجاناً ←",
-      demo: "شاهد العرض",
-      social: "انضم إلى رواد الأعمال الجزائريين الذين غيروا طريقة عملهم",
-    },
-    problems: {
-      title: "هل تتعرف على نفسك هنا؟",
-      cards: [
-        { icon: "😩", title: "الطلبات في كل مكان", desc: "إنستغرام، ماسنجر، متجرك... تضيع بين الرسائل والتعليقات." },
-        { icon: "📋", title: "نماذج التوصيل", desc: "تعبئة كل وصل توصيل يدوياً، طلباً بعد طلب. ساعات ضائعة كل يوم." },
-        { icon: "🤖", title: "الرد على الجميع", desc: "عملاء يسألون عن الأسعار والمقاسات والمواعيد... في كل ساعة. مستحيل إدارتها وحدك." },
-      ],
-    },
-    features: {
-      label: "ما يفعله فلاود لك",
-      title: "لوحة تحكم واحدة. كل عملك.",
-      cards: [
-        { icon: "📦", title: "كل طلباتك", desc: "إنستغرام وماسنجر ومتجرك في قائمة واحدة في الوقت الفعلي.", color: "#4361ee" },
-        { icon: "🤖", title: "روبوت ذكاء اصطناعي متعدد اللغات", desc: "يتحدث الدارجة والفرنسية والإنجليزية. يأخذ الطلبات تلقائياً، وينقلها لإنسان عند الحاجة.", color: "#c97aff" },
-        { icon: "🚚", title: "توصيل بنقرة واحدة", desc: "يالدين، إيكوتراك، مايسترو... النموذج يملأ نفسه. صفر إدخال يدوي.", color: "#3ecf8e" },
-        { icon: "📊", title: "لوحة تحكم في الوقت الفعلي", desc: "الإيراد، معدل التوصيل، معدل الإرجاع حسب الولاية. كل شيء أمام عينيك.", color: "#ffd43b" },
-        { icon: "🔗", title: "كل تكاملاتك", desc: "شوبيفاي، ووكومرس، إنستغرام، جوجل شيتس — صلهم في دقائق.", color: "#4361ee" },
-        { icon: "👥", title: "إدارة الفريق", desc: "أضف مؤكدين ووكلاء. كل شخص يرى ما يحتاجه.", color: "#3ecf8e" },
-      ],
-    },
-    chatbot: {
-      label: "روبوت الذكاء الاصطناعي",
-      title: "أفضل مندوب مبيعات يعمل 24/7.",
-      desc: "روبوت فلاود يرد على عملائك كإنسان حقيقي — بالدارجة أو الفرنسية أو الإنجليزية. يأخذ الطلبات ويجيب على الأسئلة وينبهك عند الحاجة.",
-      bullets: ["كشف اللغة تلقائياً", "استلام الطلب بالكامل", "نقل ذكي إلى وكيل", "تعليمات مخصصة منك"],
-    },
-    delivery: {
-      label: "التوصيل",
-      title: "انتهت النماذج. نقرة واحدة. يكفي.",
-      desc: "صل يالدين وإيكوتراك ومايسترو أو أي شركة توصيل عبر API. فلاود يملأ الوصل تلقائياً ببيانات الطلب.",
-      stats: [{ stat: "0", label: "إدخال يدوي" }, { stat: "48", label: "ولاية مغطاة" }, { stat: "Live", label: "تتبع فوري" }],
-    },
-    stats: [
-      { stat: "2 دق", label: "متوسط وقت معالجة طلب واحد" },
-      { stat: "0 دج", label: "تكلفة تعبئة نماذج التوصيل" },
-      { stat: "24/7", label: "الروبوت لا ينام أبداً" },
-      { stat: "58", label: "ولاية — توصيل في كل الجزائر" },
-    ],
-    testimonial: { quote: "قبل فلاود، كنت أمضي 3 ساعات يومياً في ملء نماذج يالدين. الآن 10 دقائق.", name: "أميرة ك.", role: "صاحبة متجر إلكتروني، البليدة" },
-    integrations: { title: "صل ما تستخدمه بالفعل", sub: "المزيد من التكاملات قريباً." },
-    cta: { title: "مستعد لتغيير طريقة إدارة عملك؟", sub: "انضم إلى رواد الأعمال الذين أتمتوا طلباتهم وتوصيلهم وخدمة عملائهم.", btn: "ابدأ مجاناً ←", note: "لا بطاقة بنكية مطلوبة · وصول فوري" },
-    footer: { tagline: "لوحة التحكم للجيل الجديد.", copy: "© 2026 فلاود. جميع الحقوق محفوظة." },
-  },
-} as const;
-
-type Lang = keyof typeof T;
-
-const LANG_OPTIONS: { code: Lang; label: string; flag: string }[] = [
-  { code: "fr", label: "Français", flag: "🇫🇷" },
-  { code: "en", label: "English", flag: "🇬🇧" },
-  { code: "ar", label: "العربية", flag: "🇩🇿" },
-];
-
-const INTEGRATIONS = ["Instagram", "Messenger", "Shopify", "WooCommerce", "Yalidine", "Ecotrack", "Maystro", "Google Sheets"];
-
-const MOCK_ORDERS = [
-  { id: 1, source: "Instagram", sourceColor: "#c97aff", name: "Amira Benali", product: "Chaussures 42", price: "4 100 DA", status: "Confirmée", statusColor: "#3ecf8e" },
-  { id: 2, source: "Messenger", sourceColor: "#4361ee", name: "Karim Hadj", product: "Sac cuir noir", price: "8 500 DA", status: "En livraison", statusColor: "#4361ee" },
-  { id: 3, source: "Shopify", sourceColor: "#3ecf8e", name: "Sara Meziane", product: "Robe soirée M", price: "6 200 DA", status: "En attente", statusColor: "#ffd43b" },
-  { id: 4, source: "Instagram", sourceColor: "#c97aff", name: "Yacine Ould", product: "Sneakers 41", price: "5 800 DA", status: "Livrée", statusColor: "#3ecf8e" },
-];
-
-// ─── Logo Component ───────────────────────────────────────────────────────────
-function FlowdLogo({ height = 32 }: { height?: number }) {
+function FlowdLogo({ fill = "#0052FF", size = 36 }: { fill?: string; size?: number }) {
   return (
-    <div className="flex items-center gap-2">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/logo.svg" alt="Flowd" style={{ height, width: height }} className="object-contain" />
-      <span style={{ fontSize: height * 0.65, lineHeight: 1 }} className="font-bold text-white tracking-tight">flowd</span>
-    </div>
+    <svg width={size} height={Math.round(size * 0.975)} viewBox="0 0 400 390" aria-label="Flowd logo">
+      <path fill={fill} d={LOGO_D} />
+    </svg>
   );
 }
 
+// ─── Translations ─────────────────────────────────────────────────────────────
+type Lang = "dz" | "fr" | "en";
+
+const T = {
+  dz: {
+    nav: { features: "Lmizat", how: "Kifach kheddem", integrations: "Intégrations", pricing: "Prix", login: "Connecter", cta: "Bda majani" },
+    hero: {
+      badge: "Mabni l ecommerce dziri",
+      h1a: "Bi3 kter.", h1b: "Thetnem aqel.",
+      sub: "Dashboard wahda l kol commandatek, chatbot AI yehki darija, w suivi livraison live — mabni l bay3in li jidin.",
+      cta: "Bda bla flous", demo: "Chof demo", note: "Majani · Bla carte bancaire",
+    },
+    logos: "Marchands dziryin fih confiance · Intégré ma3",
+    features: {
+      tag: "Lmizat", h: "Kol tool li thtaglou tbi3 biha akthar",
+      sub: "Waqfou tbadlou bin 5 apps. Flowd tjma3 kollchi bach tركزوا على البيع.",
+      cards: [
+        { icon: "🤖", title: "Chatbot AI b Darija", desc: "L AI dyalk yrod 3la l 3mliya fl darija, français wla ingliziya — b soutok w cataloguetek. Yakhod commandate, yrod 3la so2alat, w ma ynam." },
+        { icon: "📊", title: "Dashboard commandate", desc: "Commandate men Instagram, Messenger, Shopify wla manuelle — kollha f table wahda. Filtri, confirmi, chot bil batch bla ma tbadel tabs." },
+        { icon: "🚚", title: "Suivi livraison live", desc: "Connecti Yalidine, ZR Express, Maystro, w EddyApp. Suiviw kol colis live w t3arref bih fl moment li tsal wla t7bes." },
+        { icon: "⚡", title: "Pages produit IA", desc: "Chargi foto produit w Gemini AI ygeneri lak page complète f 30 secondes. Partagi le lien — commandate tjik whedha." },
+        { icon: "🔗", title: "Kol canaux, connectés", desc: "Instagram DMs, Messenger, WhatsApp, Shopify, WooCommerce, Google Sheets — webhook wahda, kollchi ydkhol fl Flowd whedh." },
+        { icon: "👥", title: "Team w permissions", desc: "Inviti agents, confirmateurs, w admins b permissions granulaires. Mabni l teams li tekbar bsre3a." },
+      ],
+    },
+    how: {
+      tag: "Kifach kheddem", h: "Men DM l delivery — f flow wahda",
+      steps: [
+        { title: "L 3mil yab3et DM", desc: "Wahd l 3mil yjawbek 3la Instagram wla Messenger. L AI dyal Flowd ydetek b lgha w yrod fl 7in — bla takhir, bla missed messages." },
+        { title: "AI yakhod la commande", desc: "L chatbot ykhod produit, quantité, wilaya, w contact — w ydir commande confirmée f dashboard dyalk automatic." },
+        { title: "Tersel b click wahda", desc: "Ikhtari Yalidine, ZR Express, Maystro, wla EddyApp w tersel. ID tracking ytgeniri w yetlia b commande fl 7al." },
+        { title: "Suiviw kollchi live", desc: "Choufi kol colis 3la kol carriers f tableau wahd. T3arref bih fl moment li tsal wla thta7 l attention." },
+      ],
+    },
+    integrations: { tag: "Intégrations", h: "Connecti kol stack dyalak", sub: "Kol platform li katkhdmou bih déjà, mconnecté m3 Flowd f quelques minutes." },
+    pricing: {
+      tag: "Prix", h: "Prix simple, bla tkhbiya", sub: "Kol prix b Dinar Dziri. Bla frais cachés. Cancel imti voules.",
+      plans: [
+        { name: "Starter", price: "Majani", period: "/ chahr", tagline: "Bach tbda w tjreb la plateforme.", features: ["7ata 100 commandate / chahr", "Canal wahda (Instagram wla Messenger)", "Chatbot AI (limitée)", "Société livraison wahda"], btn: "Bda majani", btnStyle: "outline", popular: false },
+        { name: "Growth", price: "4 900", period: "DA / chahr", tagline: "L bay3in li actifs li bgha yscalaw.", features: ["Commandate unlimited", "Kol canaux connectés", "Chatbot AI complet (Darija, FR, EN)", "Kol sociétés livraison", "Pages produit IA", "Team 7ata 5 membres"], btn: "Essai gratuit 14 jours", btnStyle: "solid", popular: true },
+        { name: "Pro", price: "9 900", period: "DA / chahr", tagline: "L teams w opérations multi-boutiques.", features: ["Kol li f Growth", "Multi-workspace", "Membres équipe unlimited", "Support prioritaire", "Persona chatbot personnalisé"], btn: "Contactana", btnStyle: "outline", popular: false },
+      ],
+    },
+    testimonials: {
+      tag: "Témoignages", h: "Bay3in kaysanaw Flowd",
+      cards: [
+        { quote: '"Chatbot IA yehki Darija bhal ana. L 3mliya ma katerfou htta annou bot. Commandate zdadu b 40% f chahr lwel."', name: "Sofia Amrani", meta: "Mode boutique · Alger", initials: "SA", color: "#0052FF" },
+        { quote: '"Kont ndiru 3 tableurs w 4 apps. Daba kollchi f Flowd. Nchoufi kol commande, kol colis, f chi wahda. 3jibatli l 7ayat."', name: "Karim Moussa", meta: "Electronique · Oran", initials: "KM", color: "#0EA5E9" },
+        { quote: '"Pages produit IA waheda ta7la l abonnement. 30 secondes bach t3mel page complète men foto wahda."', name: "Nadia Benmoussa", meta: "Cosmétiques · Constantine", initials: "NB", color: "#F97316" },
+      ],
+    },
+    cta: { badge: "Rejoignez des centaines de vendeurs algériens", h1: "Dirou kollchi men", h2: "chi wahda.", sub: "Bla carte bancaire. Bla engagement. Ghi akthar bi3 w aqel stress.", btn: "Bda majani", demo: "Chof kifach kheddem" },
+    footer: { copy: "© 2026 Flowd · Mabni l ecommerce dziri", links: ["Confidentialité", "CGU", "Contact"] },
+  },
+  fr: {
+    nav: { features: "Fonctionnalités", how: "Comment ça marche", integrations: "Intégrations", pricing: "Tarifs", login: "Se connecter", cta: "Commencer gratuitement" },
+    hero: {
+      badge: "Conçu pour le e-commerce algérien",
+      h1a: "Vendez plus.", h1b: "Stressez moins.",
+      sub: "Un dashboard pour toutes vos commandes, un chatbot IA qui parle darija, et un suivi livraison en temps réel — conçu pour les vendeurs sérieux.",
+      cta: "Commencer gratuitement", demo: "Voir la démo", note: "Gratuit · Aucune carte bancaire",
+    },
+    logos: "Approuvé par les vendeurs algériens · Intégré avec",
+    features: {
+      tag: "Fonctionnalités", h: "Tous les outils pour vendre plus vite",
+      sub: "Fini les 5 apps. Flowd centralise tout pour que vous puissiez vous concentrer sur la vente.",
+      cards: [
+        { icon: "🤖", title: "Chatbot IA en Darija", desc: "Votre IA répond instantanément en darija, français ou anglais — avec votre ton et votre catalogue. Il prend les commandes et ne dort jamais." },
+        { icon: "📊", title: "Dashboard commandes unifié", desc: "Commandes d'Instagram, Messenger, Shopify ou manuel — tout dans un seul tableau. Filtrez, confirmez et expédiez en masse sans changer d'onglet." },
+        { icon: "🚚", title: "Suivi livraison en temps réel", desc: "Connectez Yalidine, ZR Express, Maystro, et EddyApp. Suivez chaque colis en direct et soyez alerté dès qu'une livraison échoue ou réussit." },
+        { icon: "⚡", title: "Pages produit IA", desc: "Uploadez une photo produit et Gemini AI génère une page complète en 30 secondes. Partagez le lien — les commandes arrivent automatiquement." },
+        { icon: "🔗", title: "Tous les canaux, connectés", desc: "Instagram DMs, Messenger, WhatsApp, Shopify, WooCommerce, Google Sheets — un webhook, tout rentre dans Flowd automatiquement." },
+        { icon: "👥", title: "Équipe & permissions", desc: "Invitez des agents, confirmateurs et admins avec des permissions granulaires. Conçu pour les équipes qui grandissent vite." },
+      ],
+    },
+    how: {
+      tag: "Comment ça marche", h: "Du DM à la livraison — en un seul flux",
+      steps: [
+        { title: "Le client envoie un DM", desc: "Un client vous contacte sur Instagram ou Messenger. L'IA de Flowd détecte sa langue et répond instantanément — aucun délai, aucun message manqué." },
+        { title: "L'IA collecte la commande", desc: "Le chatbot recueille le produit, la quantité, la wilaya et le contact — puis crée une commande confirmée dans votre dashboard automatiquement." },
+        { title: "Vous expédiez en un clic", desc: "Choisissez Yalidine, ZR Express, Maystro, ou EddyApp et expédiez. Un ID de suivi est généré et lié à la commande immédiatement." },
+        { title: "Suivez tout en temps réel", desc: "Suivez tous les colis sur tous les transporteurs sur un seul tableau de bord. Sachez immédiatement quand une livraison réussit ou nécessite attention." },
+      ],
+    },
+    integrations: { tag: "Intégrations", h: "Connectez toute votre stack", sub: "Chaque plateforme que vous utilisez déjà, branchée sur Flowd en quelques minutes." },
+    pricing: {
+      tag: "Tarifs", h: "Des prix simples et honnêtes", sub: "Tous les prix en Dinar Algérien. Aucun frais caché. Annulez à tout moment.",
+      plans: [
+        { name: "Starter", price: "Gratuit", period: "/ mois", tagline: "Pour démarrer et tester la plateforme.", features: ["Jusqu'à 100 commandes / mois", "1 canal (Instagram ou Messenger)", "Chatbot AI (limité)", "1 société de livraison"], btn: "Commencer gratuitement", btnStyle: "outline", popular: false },
+        { name: "Growth", price: "4 900", period: "DA / mois", tagline: "Pour les vendeurs actifs qui veulent scaler.", features: ["Commandes illimitées", "Tous les canaux connectés", "Chatbot AI complet (Darija, FR, EN)", "Toutes les sociétés de livraison", "Pages produit IA", "Équipe jusqu'à 5 membres"], btn: "Essai gratuit 14 jours", btnStyle: "solid", popular: true },
+        { name: "Pro", price: "9 900", period: "DA / mois", tagline: "Pour les équipes et opérations multi-boutiques.", features: ["Tout ce qui est dans Growth", "Multi-workspace", "Membres d'équipe illimités", "Support prioritaire", "Persona chatbot personnalisé"], btn: "Nous contacter", btnStyle: "outline", popular: false },
+      ],
+    },
+    testimonials: {
+      tag: "Témoignages", h: "Les vendeurs adorent Flowd",
+      cards: [
+        { quote: '"Le chatbot IA parle Darija exactement comme moi. Mes clients ne savent même pas que c\'est un bot. Les commandes ont augmenté de 40% le premier mois."', name: "Sofia Amrani", meta: "Boutique mode · Alger", initials: "SA", color: "#0052FF" },
+        { quote: '"Je gérais 3 tableurs et 4 apps. Maintenant tout est dans Flowd. Je vois chaque commande, chaque colis, sur un seul écran. 3jibatli l 7ayat."', name: "Karim Moussa", meta: "Électronique · Oran", initials: "KM", color: "#0EA5E9" },
+        { quote: '"La génération de pages produit IA vaut à elle seule l\'abonnement. 30 secondes pour une page complète à partir d\'une simple photo."', name: "Nadia Benmoussa", meta: "Cosmétiques · Constantine", initials: "NB", color: "#F97316" },
+      ],
+    },
+    cta: { badge: "Rejoignez des centaines de vendeurs algériens", h1: "Gérez tout depuis", h2: "un seul onglet.", sub: "Pas de carte de crédit. Pas d'engagement. Juste plus de ventes et moins de stress.", btn: "Commencer gratuitement", demo: "Voir comment ça marche" },
+    footer: { copy: "© 2026 Flowd · Fait pour le e-commerce algérien", links: ["Confidentialité", "CGU", "Contact"] },
+  },
+  en: {
+    nav: { features: "Features", how: "How it works", integrations: "Integrations", pricing: "Pricing", login: "Sign in", cta: "Get started free" },
+    hero: {
+      badge: "Built for Algerian e-commerce",
+      h1a: "Sell more.", h1b: "Stress less.",
+      sub: "One dashboard for all your orders, an AI chatbot that speaks Darija, and real-time delivery tracking — built for sellers who mean business.",
+      cta: "Start for free", demo: "Watch demo", note: "Free forever · No credit card needed",
+    },
+    logos: "Trusted by sellers across Algeria · Integrated with",
+    features: {
+      tag: "Features", h: "Every tool you need to grow faster",
+      sub: "Stop juggling 5 apps. Flowd brings everything together so you can focus on selling.",
+      cards: [
+        { icon: "🤖", title: "AI Chatbot in Darija", desc: "Your AI replies instantly in Darija, French, or English — using your tone and your catalog. It takes orders, handles questions, and never sleeps." },
+        { icon: "📊", title: "Unified order dashboard", desc: "Orders from Instagram, Messenger, Shopify, or manual — all in one table. Filter, confirm, and ship in bulk without switching tabs." },
+        { icon: "🚚", title: "Real-time delivery tracking", desc: "Connect Yalidine, ZR Express, Maystro, and EddyApp. Monitor every parcel live and get alerted the moment a delivery fails or succeeds." },
+        { icon: "⚡", title: "AI product landing pages", desc: "Upload a product photo and Gemini AI generates a full landing page in 30 seconds. Share the link — orders flow in automatically." },
+        { icon: "🔗", title: "All channels, connected", desc: "Instagram DMs, Messenger, WhatsApp, Shopify, WooCommerce, Google Sheets — one webhook, everything flows into Flowd automatically." },
+        { icon: "👥", title: "Team & permission roles", desc: "Invite agents, confirmers, and admins with granular permissions. Built for teams growing fast and staying organized." },
+      ],
+    },
+    how: {
+      tag: "How it works", h: "From DM to delivered — in one flow",
+      steps: [
+        { title: "Customer sends a DM", desc: "A customer messages you on Instagram or Messenger. Flowd's AI detects their language and replies instantly — no delay, no missed messages." },
+        { title: "AI collects the order", desc: "The chatbot gathers product, quantity, wilaya, and contact info — then creates a confirmed order in your dashboard automatically." },
+        { title: "You ship with one click", desc: "Select Yalidine, ZR Express, Maystro, or EddyApp and dispatch. A tracking ID is generated and linked to the order immediately." },
+        { title: "Track everything in real-time", desc: "Monitor all parcels across all carriers on a single board. Know immediately when a delivery succeeds or needs attention." },
+      ],
+    },
+    integrations: { tag: "Integrations", h: "Connect your entire stack", sub: "Every platform you already use, plugged into Flowd in minutes." },
+    pricing: {
+      tag: "Pricing", h: "Simple, honest pricing", sub: "All prices in Algerian Dinar. No hidden fees. Cancel anytime.",
+      plans: [
+        { name: "Starter", price: "Free", period: "/ month", tagline: "To get started and test the platform.", features: ["Up to 100 orders / month", "1 channel (Instagram or Messenger)", "AI Chatbot (limited)", "1 delivery company"], btn: "Get started free", btnStyle: "outline", popular: false },
+        { name: "Growth", price: "4,900", period: "DA / month", tagline: "For active sellers who want to scale.", features: ["Unlimited orders", "All channels connected", "Full AI Chatbot (Darija, FR, EN)", "All delivery companies", "AI product landing pages", "Team up to 5 members"], btn: "14-day free trial", btnStyle: "solid", popular: true },
+        { name: "Pro", price: "9,900", period: "DA / month", tagline: "For teams and multi-store operations.", features: ["Everything in Growth", "Multi-workspace", "Unlimited team members", "Priority support", "Custom chatbot persona"], btn: "Contact us", btnStyle: "outline", popular: false },
+      ],
+    },
+    testimonials: {
+      tag: "Testimonials", h: "Sellers love Flowd",
+      cards: [
+        { quote: '"The AI chatbot speaks Darija exactly like me. My customers don\'t even know it\'s a bot. Orders increased by 40% in the first month."', name: "Sofia Amrani", meta: "Fashion boutique · Alger", initials: "SA", color: "#0052FF" },
+        { quote: '"I was managing 3 spreadsheets and 4 apps. Now everything is in Flowd. I see every order, every parcel, on one screen. 3jibatli l 7ayat."', name: "Karim Moussa", meta: "Electronics · Oran", initials: "KM", color: "#0EA5E9" },
+        { quote: '"The AI product page generator alone is worth the subscription. 30 seconds for a complete page from a single photo."', name: "Nadia Benmoussa", meta: "Cosmetics · Constantine", initials: "NB", color: "#F97316" },
+      ],
+    },
+    cta: { badge: "Join hundreds of Algerian sellers", h1: "Manage everything from", h2: "one tab.", sub: "No credit card. No commitment. Just more sales and less stress.", btn: "Get started free", demo: "See how it works" },
+    footer: { copy: "© 2026 Flowd · Built for Algerian e-commerce", links: ["Privacy", "Terms", "Contact"] },
+  },
+} as const;
+
+const LANG_OPTIONS: { code: Lang; label: string; flag: string }[] = [
+  { code: "dz", label: "Darija", flag: "🇩🇿" },
+  { code: "fr", label: "Français", flag: "🇫🇷" },
+  { code: "en", label: "English", flag: "🇬🇧" },
+];
+
+// ─── How-it-works visual content (dangerouslySetInnerHTML) ────────────────────
+const VIS_STEPS = [
+  {
+    title: "AI Chatbot · Live conversation",
+    html: `<div style="display:flex;flex-direction:column;gap:10px"><div><div class="cb-label">Customer · Instagram</div><div class="cbubble cb-user">Salam, wach 3andkom sac cuir?</div></div><div><div class="cb-label" style="color:var(--blue)">Flowd AI · Darija</div><div class="cbubble cb-bot">Wah! 3andna 3 modèles: noir, marron, khamri. Min 4500 DA. Nwarjik les photos?</div></div><div><div class="cb-label">Customer</div><div class="cbubble cb-user">iyeh warini lkhamri</div></div><div style="font-size:11px;color:var(--muted2);margin-top:4px;display:flex;align-items:center;gap:6px"><div class="live-dot" style="width:5px;height:5px;border-radius:50%;background:#22C55E;animation:pulse 2s ease infinite"></div>AI detected Darija · replied in 0.4s</div></div>`,
+  },
+  {
+    title: "Order dashboard · Auto-created",
+    html: `<div><div style="font-size:11px;color:var(--muted);margin-bottom:14px;text-transform:uppercase;letter-spacing:.08em;font-weight:600">Nouvelle commande · Depuis Instagram</div><div style="background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:10px"><div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--muted)">Référence</span><span style="font-family:monospace;font-weight:600;color:var(--text)">ORD-8F2A3B1C</span></div><div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--muted)">Cliente</span><span style="font-weight:600;color:var(--text)">Leila Rahmani</span></div><div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--muted)">Wilaya</span><span style="color:var(--text)">Alger (16)</span></div><div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--muted)">Total</span><span style="color:var(--blue);font-weight:700">4 500 DA</span></div></div><div style="display:flex;gap:8px;margin-top:12px"><div style="flex:1;background:var(--blue);color:white;padding:9px;border-radius:7px;text-align:center;font-size:12px;font-weight:700">Confirmer</div><div style="background:var(--card-bg);border:1.5px solid var(--border);padding:9px;border-radius:7px;text-align:center;font-size:12px;color:var(--muted);flex:1">Voir détails</div></div></div>`,
+  },
+  {
+    title: "Livraison · Expédier via Yalidine",
+    html: `<div style="display:flex;flex-direction:column;gap:10px"><div style="display:flex;gap:8px"><div style="flex:1;padding:12px;border-radius:8px;border:2px solid var(--blue);background:var(--blue-light);text-align:center"><div style="font-size:12px;color:var(--blue);font-weight:700;margin-bottom:3px">Yalidine</div><div style="font-size:11px;color:var(--muted)">700 DA · J+1</div></div><div style="flex:1;padding:12px;border-radius:8px;border:1.5px solid var(--border);text-align:center"><div style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:3px">ZR Express</div><div style="font-size:11px;color:var(--muted)">800 DA · J+2</div></div></div><div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;font-size:12px;display:flex;flex-direction:column;gap:8px"><div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Destinataire</span><span style="font-weight:600;color:var(--text)">Leila Rahmani · Alger</span></div><div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Montant COD</span><span style="color:var(--blue);font-weight:700">4 500 DA</span></div></div><div style="background:var(--blue);color:white;padding:11px;border-radius:8px;text-align:center;font-size:13px;font-weight:700">Expédier avec Yalidine →</div></div>`,
+  },
+  {
+    title: "Suivi livraisons · Temps réel",
+    html: `<div style="display:flex;flex-direction:column;gap:8px"><div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;font-size:12px"><span style="color:var(--muted);font-family:monospace">YLD-884521</span><span style="font-weight:600;color:var(--text)">Alger · Leila R.</span><span style="padding:3px 9px;border-radius:100px;background:#DCFCE7;color:#15803D;font-size:10px;font-weight:700">Livré</span></div><div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;font-size:12px"><span style="color:var(--muted);font-family:monospace">YLD-884490</span><span style="font-weight:600;color:var(--text)">Oran · Karim M.</span><span style="padding:3px 9px;border-radius:100px;background:var(--blue-light);color:var(--blue);font-size:10px;font-weight:700">En transit</span></div><div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;font-size:12px"><span style="color:var(--muted);font-family:monospace">ZR-21033</span><span style="font-weight:600;color:var(--text)">Constantine · Nadia B.</span><span style="padding:3px 9px;border-radius:100px;background:#FEF3C7;color:#A16207;font-size:10px;font-weight:700">En livraison</span></div><div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;font-size:12px"><span style="color:var(--muted);font-family:monospace">YLD-883901</span><span style="font-weight:600;color:var(--text)">Sétif · Ahmed T.</span><span style="padding:3px 9px;border-radius:100px;background:var(--surface);color:var(--muted);font-size:10px;font-weight:700">Préparation</span></div></div>`,
+  },
+];
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function LandingPage() {
-  const [lang, setLang] = useState<Lang>("fr");
+  const [lang, setLang] = useState<Lang>("dz");
+  const [theme, setTheme] = useState<"light" | "dark">("light");
   const [menuOpen, setMenuOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const [activeSection, setActiveSection] = useState("hero");
-  const heroRef = useRef<HTMLDivElement>(null);
+  const [activeStep, setActiveStep] = useState(0);
 
-  const t = T[lang];
-  const isRtl = t.dir === "rtl";
-
+  // Persist preferences
   useEffect(() => {
-    const saved = localStorage.getItem("flowd_lang") as Lang | null;
-    if (saved && T[saved]) setLang(saved);
+    const savedLang = localStorage.getItem("flowd_lang3") as Lang | null;
+    if (savedLang && ["dz", "fr", "en"].includes(savedLang)) setLang(savedLang);
+    const savedTheme = localStorage.getItem("flowd_theme") as "light" | "dark" | null;
+    if (savedTheme) setTheme(savedTheme);
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("flowd_lang", lang);
-    document.documentElement.setAttribute("dir", t.dir);
-    document.documentElement.setAttribute("lang", lang);
-  }, [lang, t.dir]);
+    localStorage.setItem("flowd_lang3", lang);
+  }, [lang]);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+    localStorage.setItem("flowd_theme", theme);
+  }, [theme]);
 
+  // AOS scroll reveal
   useEffect(() => {
-    const revealObs = new IntersectionObserver(
-      (entries) => entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add("in-view"); }),
-      { threshold: 0.1, rootMargin: "0px 0px -40px 0px" }
+    const obs = new IntersectionObserver(
+      (entries) => entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add("visible"); }),
+      { threshold: 0.08 }
     );
-    document.querySelectorAll("[data-reveal]").forEach((el) => revealObs.observe(el));
-
-    const sectionObs = new IntersectionObserver(
-      (entries) => entries.forEach((e) => { if (e.isIntersecting) setActiveSection(e.target.id); }),
-      { threshold: 0.3 }
-    );
-    document.querySelectorAll("section[id]").forEach((s) => sectionObs.observe(s));
-
-    return () => { revealObs.disconnect(); sectionObs.disconnect(); };
-  }, []);
-
-  // Counter animation for stats
-  useEffect(() => {
-    const counters = document.querySelectorAll("[data-count]");
-    const obs = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("counting");
-          obs.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.5 });
-    counters.forEach((el) => obs.observe(el));
+    document.querySelectorAll(".aos").forEach((el) => obs.observe(el));
     return () => obs.disconnect();
   }, [lang]);
 
-  const NAV_LINKS = [
+  const t = T[lang];
+
+  function closeMenu() {
+    setMenuOpen(false);
+    setLangOpen(false);
+  }
+
+  const navLinks = [
     { href: "#features", label: t.nav.features },
-    { href: "#chatbot", label: t.nav.chatbot },
-    { href: "#delivery", label: t.nav.delivery },
+    { href: "#how", label: t.nav.how },
+    { href: "#integrations", label: t.nav.integrations },
     { href: "#pricing", label: t.nav.pricing },
   ];
 
   return (
     <>
       <style>{`
-        html { scroll-behavior: smooth; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
-        [data-reveal] {
-          opacity: 0; transform: translateY(32px);
-          transition: opacity 0.7s cubic-bezier(.16,1,.3,1), transform 0.7s cubic-bezier(.16,1,.3,1);
-        }
-        [data-reveal].in-view { opacity: 1; transform: translateY(0); }
-        [data-delay="1"] { transition-delay: 90ms; }
-        [data-delay="2"] { transition-delay: 180ms; }
-        [data-delay="3"] { transition-delay: 270ms; }
-        [data-delay="4"] { transition-delay: 360ms; }
-        [data-delay="5"] { transition-delay: 450ms; }
-        [data-delay="6"] { transition-delay: 540ms; }
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
-        /* Word stagger animation */
-        @keyframes word-up {
-          from { opacity: 0; transform: translateY(24px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        .hero-word { display: inline-block; animation: word-up 0.6s cubic-bezier(.16,1,.3,1) both; }
-
-        /* Floating card */
-        @keyframes float {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          33%  { transform: translateY(-8px) rotate(0.3deg); }
-          66%  { transform: translateY(-4px) rotate(-0.3deg); }
-        }
-        .float-card { animation: float 7s ease-in-out infinite; }
-
-        /* Pulse dot */
-        @keyframes pulse-dot {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.5; transform: scale(0.85); }
-        }
-        .live-dot { animation: pulse-dot 2s ease-in-out infinite; }
-
-        /* Glow pulse on hero button */
-        @keyframes glow-pulse {
-          0%, 100% { box-shadow: 0 0 40px rgba(67,97,238,.35); }
-          50% { box-shadow: 0 0 64px rgba(67,97,238,.6); }
-        }
-        .btn-primary { animation: glow-pulse 3s ease-in-out infinite; }
-
-        /* Row hover */
-        .order-row:hover { background: rgba(255,255,255,0.03); }
-
-        /* Card hover */
-        .feat-card {
-          transition: border-color .25s, transform .3s cubic-bezier(.16,1,.3,1), box-shadow .3s;
-        }
-        .feat-card:hover {
-          border-color: rgba(67,97,238,.4) !important;
-          transform: translateY(-4px);
-          box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        /* ── LIGHT VARIABLES (default) ── */
+        :root{
+          --blue:#0052FF;--blue-dark:#0040CC;--blue-light:#EBF0FF;--blue-mid:#D0DCFF;
+          --black:#121212;--white:#ffffff;--surface:#F4F7FF;--border:#E2E8F8;--border2:#C5D0EF;
+          --text:#121212;--muted:#6B7A99;--muted2:#94A3C0;--card-bg:#ffffff;
+          --font:'Inter',system-ui,sans-serif;
         }
 
-        /* Integration pill hover */
-        .int-pill {
-          transition: border-color .2s, color .2s, transform .2s;
-          cursor: default;
-        }
-        .int-pill:hover {
-          border-color: rgba(67,97,238,.5) !important;
-          color: white !important;
-          transform: translateY(-2px);
+        /* ── DARK VARIABLES ── */
+        [data-theme="dark"]{
+          --blue:#3b8eff;--blue-dark:#2a7aff;--blue-light:#0d1d3a;--blue-mid:#102545;
+          --black:#e8ecf5;--white:#0d1117;--surface:#161c2c;--border:#1e2a3d;--border2:#2a3d5e;
+          --text:#e8ecf5;--muted:#8b9ab8;--muted2:#5b6a8a;--card-bg:#1a2235;
         }
 
-        /* Shine on CTA button */
-        @keyframes shine {
-          from { left: -100%; }
-          to   { left: 200%; }
+        html{scroll-behavior:smooth}
+        body{background:var(--white);color:var(--text);font-family:var(--font);font-size:16px;line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+
+        /* ── DARK MODE OVERRIDES ── */
+        [data-theme="dark"] nav{
+          background:rgba(13,17,23,0.95)!important;
+          border-bottom-color:rgba(255,255,255,0.08)!important;
         }
-        .btn-shine { position: relative; overflow: hidden; }
-        .btn-shine::after {
-          content: '';
-          position: absolute;
-          top: 0; left: -100%;
-          width: 60%; height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,.15), transparent);
-          animation: shine 3s ease-in-out 1s infinite;
+        [data-theme="dark"] .nav-logo-text{color:var(--text)!important}
+        [data-theme="dark"] .hamburger span{background:var(--text)!important}
+        [data-theme="dark"] .mobile-menu{background:#0d1117!important}
+        [data-theme="dark"] .mobile-menu a{color:var(--text)!important}
+        [data-theme="dark"] .hero{background:#0d1117!important}
+        [data-theme="dark"] .logos{background:#111827!important;border-color:rgba(255,255,255,0.06)!important}
+        [data-theme="dark"] .how-section{background:#111827!important;border-color:rgba(255,255,255,0.06)!important}
+        [data-theme="dark"] .how-visual{background:#161c2c!important}
+        [data-theme="dark"] .vis-header{background:#111827!important;border-color:#1e2a3d!important}
+        [data-theme="dark"] .browser-frame{background:#1a2235!important}
+        [data-theme="dark"] .browser-bar{background:#0d1117!important;border-color:#1e2a3d!important}
+        [data-theme="dark"] .browser-url{background:#111827!important;border-color:#1e2a3d!important;color:var(--muted)!important}
+        [data-theme="dark"] .dash-sidebar{background:#080d18!important}
+        [data-theme="dark"] .dash-main{background:#111827!important}
+        [data-theme="dark"] .metric{background:#1a2235!important}
+        [data-theme="dark"] .dcard{background:#1a2235!important}
+        [data-theme="dark"] .ws-badge{background:#1a2235!important;border-color:#2a3d5e!important}
+        [data-theme="dark"] .feat-card{background:#161c2c!important}
+        [data-theme="dark"] .feat-grid{background:var(--border)!important;border-color:var(--border)!important}
+        [data-theme="dark"] .int-card{background:#1a2235!important}
+        [data-theme="dark"] .pcard{background:#1a2235!important}
+        [data-theme="dark"] .pcard.featured{background:linear-gradient(160deg,#0d1d3a 0%,#1a2235 50%)!important}
+        [data-theme="dark"] .pb-outline{border-color:#2a3d5e!important;color:var(--text)!important}
+        [data-theme="dark"] .pb-outline:hover{border-color:var(--blue)!important;color:var(--blue)!important}
+        [data-theme="dark"] .tcard{background:#161c2c!important;border-color:#1e2a3d!important}
+        [data-theme="dark"] .pricing-section{background:#111827!important;border-color:rgba(255,255,255,0.06)!important}
+        [data-theme="dark"] .cta-section{background:#060b16!important}
+        [data-theme="dark"] footer{background:#060b16!important;border-top-color:rgba(255,255,255,0.07)!important}
+        [data-theme="dark"] .footer-logo-txt{color:white!important}
+        [data-theme="dark"] .footer-copy{color:rgba(255,255,255,0.3)!important}
+        [data-theme="dark"] .footer-links a{color:rgba(255,255,255,0.35)!important}
+        [data-theme="dark"] .step{border-color:#1e2a3d!important}
+        [data-theme="dark"] .step-num{background:#1a2235!important;border-color:#2a3d5e!important}
+        [data-theme="dark"] .step.active .step-num{background:var(--blue)!important;border-color:var(--blue)!important}
+        [data-theme="dark"] .plan-divider{border-color:#1e2a3d!important}
+        [data-theme="dark"] .orow{border-color:#1e2a3d!important}
+        [data-theme="dark"] .int-card:hover{border-color:var(--blue)!important}
+        [data-theme="dark"] .tcard:hover{border-color:var(--blue-mid)!important}
+
+        /* ── NAV ── */
+        nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 56px;height:68px;background:rgba(255,255,255,0.93);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);transition:background .3s}
+        .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;z-index:201}
+        .nav-logo-text{font-size:20px;font-weight:800;color:var(--black);letter-spacing:-0.03em}
+        .nav-links{display:flex;align-items:center;gap:36px;list-style:none}
+        .nav-links a{color:var(--muted);text-decoration:none;font-size:14px;font-weight:500;transition:color .18s}
+        .nav-links a:hover{color:var(--black)}
+        .nav-actions{display:flex;align-items:center;gap:8px}
+        .hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:8px;z-index:201;background:none;border:none}
+        .hamburger span{display:block;width:22px;height:2px;background:var(--black);border-radius:2px;transition:all .25s}
+        .hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+        .hamburger.open span:nth-child(2){opacity:0}
+        .hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+        .mobile-menu{display:none;position:fixed;inset:0;background:var(--white);z-index:199;flex-direction:column;align-items:center;justify-content:center;gap:28px;opacity:0;transition:opacity .25s;padding:20px}
+        .mobile-menu.open{opacity:1}
+        .mobile-menu a{font-size:22px;font-weight:700;color:var(--text);text-decoration:none;letter-spacing:-0.02em}
+        .mobile-menu a:hover{color:var(--blue)}
+        .mobile-menu-actions{display:flex;flex-direction:column;gap:12px;align-items:stretch;width:100%;max-width:280px;margin-top:8px}
+
+        /* Lang switcher */
+        .lang-btn{display:flex;align-items:center;gap:5px;background:transparent;border:1.5px solid var(--border2);border-radius:7px;padding:7px 11px;cursor:pointer;color:var(--muted);font-size:13px;font-weight:500;font-family:var(--font);transition:all .18s}
+        .lang-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-light)}
+        .lang-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:var(--white);border:1.5px solid var(--border);border-radius:10px;overflow:hidden;min-width:140px;box-shadow:0 12px 40px rgba(0,0,0,.12);z-index:300}
+        [data-theme="dark"] .lang-dropdown{background:#1a2235;border-color:#2a3d5e;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+        .lang-option{width:100%;display:flex;align-items:center;gap:10px;padding:10px 14px;background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px;font-weight:400;font-family:var(--font);text-align:left;transition:background .15s}
+        .lang-option:hover,.lang-option.active{background:var(--blue-light);color:var(--blue)}
+        .lang-option.active{font-weight:700}
+
+        /* Theme toggle */
+        .theme-btn{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:8px;border:1.5px solid var(--border2);cursor:pointer;background:transparent;font-size:16px;transition:all .18s;line-height:1}
+        .theme-btn:hover{background:var(--surface);border-color:var(--blue)}
+
+        /* ── BUTTONS ── */
+        .btn{display:inline-flex;align-items:center;gap:8px;text-decoration:none;border-radius:8px;font-family:var(--font);font-weight:600;font-size:14px;cursor:pointer;transition:all .18s;border:none}
+        .btn-ghost{background:transparent;color:var(--text);padding:9px 18px;border:1.5px solid var(--border2)}
+        .btn-ghost:hover{background:var(--surface);border-color:var(--blue);color:var(--blue)}
+        .btn-primary{background:var(--blue);color:#fff;padding:10px 22px}
+        .btn-primary:hover{background:var(--blue-dark);transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,82,255,.3)}
+        .btn-primary-lg{padding:14px 32px;font-size:16px;border-radius:10px}
+        .btn-outline-lg{background:transparent;color:var(--blue);padding:14px 32px;font-size:16px;border:1.5px solid var(--blue);border-radius:10px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:all .18s}
+        .btn-outline-lg:hover{background:var(--blue-light)}
+
+        /* ── HERO ── */
+        .hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:100px 24px 80px;background:var(--white);position:relative;overflow:hidden}
+        .hero::before{content:'';position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:64px 64px;opacity:.4;pointer-events:none}
+        .hero::after{content:'';position:absolute;width:800px;height:500px;border-radius:50%;background:radial-gradient(ellipse,rgba(0,82,255,.08) 0%,transparent 70%);top:20%;left:50%;transform:translateX(-50%);pointer-events:none}
+        .hero-badge{display:inline-flex;align-items:center;gap:8px;background:var(--blue-light);border:1px solid var(--blue-mid);border-radius:100px;padding:6px 16px;font-size:13px;font-weight:600;color:var(--blue);margin-bottom:32px;position:relative;z-index:1;animation:fadeUp .5s ease both}
+        .badge-pulse{width:7px;height:7px;border-radius:50%;background:var(--blue);animation:pulse 2s ease infinite;flex-shrink:0}
+        @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+        .hero h1{font-size:clamp(40px,6.5vw,88px);font-weight:900;line-height:1.0;letter-spacing:-0.04em;max-width:820px;position:relative;z-index:1;animation:fadeUp .5s ease .1s both;color:var(--text)}
+        .hero h1 .blue{color:var(--blue)}
+        .hero-sub{margin-top:24px;font-size:18px;color:var(--muted);max-width:520px;line-height:1.7;font-weight:400;position:relative;z-index:1;animation:fadeUp .5s ease .2s both}
+        .hero-actions{margin-top:40px;display:flex;align-items:center;gap:14px;position:relative;z-index:1;animation:fadeUp .5s ease .3s both;flex-wrap:wrap;justify-content:center}
+        .hero-note{margin-top:14px;font-size:13px;color:var(--muted2);position:relative;z-index:1;animation:fadeUp .5s ease .35s both}
+
+        /* ── DASHBOARD MOCKUP ── */
+        .hero-visual{margin-top:72px;width:100%;max-width:1080px;position:relative;z-index:1;animation:fadeUp .7s ease .4s both}
+        .browser-frame{background:var(--white);border:1.5px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 24px 80px rgba(0,82,255,.1),0 4px 24px rgba(18,18,18,.08)}
+        .browser-bar{display:flex;align-items:center;gap:8px;padding:13px 20px;background:var(--surface);border-bottom:1px solid var(--border)}
+        .b-dot{width:11px;height:11px;border-radius:50%}
+        .b1{background:#FF5F57}.b2{background:#FEBC2E}.b3{background:#28C840}
+        .browser-url{margin-left:12px;background:var(--white);border:1px solid var(--border);border-radius:6px;padding:5px 16px;font-size:12px;color:var(--muted)}
+        .dash-layout{display:grid;grid-template-columns:220px 1fr;min-height:380px}
+        .dash-sidebar{background:#121212;padding:20px 0;display:flex;flex-direction:column}
+        .dash-sidebar-logo{display:flex;align-items:center;gap:10px;padding:0 20px 20px;border-bottom:1px solid rgba(255,255,255,.07);margin-bottom:12px}
+        .dash-sidebar-logo-text{font-size:16px;font-weight:800;color:white;letter-spacing:-0.03em}
+        .snav{display:flex;align-items:center;gap:10px;padding:9px 20px;font-size:13px;font-weight:500;color:rgba(255,255,255,.4);cursor:pointer;transition:all .15s;border-left:2px solid transparent}
+        .snav.active{color:white;background:rgba(255,255,255,.06);border-left-color:var(--blue)}
+        .snav svg{width:15px;height:15px;flex-shrink:0}
+        .dash-main{background:var(--surface);padding:24px}
+        .dash-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+        .dash-topbar-title{font-size:18px;font-weight:700;letter-spacing:-0.02em;color:var(--text)}
+        .ws-badge{display:flex;align-items:center;gap:6px;background:var(--white);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:12px;color:var(--muted);font-weight:500}
+        .ws-dot{width:7px;height:7px;border-radius:50%;background:#22C55E}
+        .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+        .metric{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px}
+        .metric-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+        .metric-val{font-size:22px;font-weight:800;letter-spacing:-0.03em;color:var(--text)}
+        .metric-delta{font-size:11px;color:#22C55E;font-weight:600;margin-top:4px}
+        .metric-delta.blue{color:var(--blue)}
+        .dash-cards{display:grid;grid-template-columns:1fr .85fr;gap:10px}
+        .dcard{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px}
+        .dcard-title{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;font-weight:600}
+        .orow{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px}
+        .orow:last-child{border:none}
+        .oname{font-weight:600;color:var(--text)}
+        .owil{font-size:11px;color:var(--muted);margin-top:1px}
+        .sbadge{font-size:10px;font-weight:600;padding:3px 9px;border-radius:100px}
+        .sb-conf{background:#DCFCE7;color:#15803D}.sb-ship{background:var(--blue-light);color:var(--blue)}.sb-pend{background:#FEF9C3;color:#A16207}
+        .cbubble{display:inline-block;padding:8px 12px;border-radius:10px;font-size:12px;line-height:1.5;max-width:90%;margin-bottom:8px}
+        .cb-user{background:var(--surface);border:1px solid var(--border);color:var(--text);margin-left:auto;display:block}
+        .cb-bot{background:var(--blue);color:white}
+        .cb-label{font-size:10px;color:var(--muted2);margin-bottom:3px}
+        .cursor-blink{display:inline-block;width:2px;height:12px;background:white;animation:blink 1s step-end infinite;margin-left:2px;vertical-align:middle}
+        @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+        /* ── LOGOS ── */
+        .logos{background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:48px 56px;text-align:center}
+        .logos-ttl{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted2);font-weight:600;margin-bottom:32px}
+        .logos-row{display:flex;align-items:center;justify-content:center;gap:48px;flex-wrap:wrap}
+        .lpill{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--muted);opacity:.65;transition:opacity .2s;cursor:default}
+        .lpill:hover{opacity:1}
+        .lico{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px}
+
+        /* ── SECTIONS ── */
+        .section{padding:100px 56px;max-width:1200px;margin:0 auto}
+        .section-tag{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--blue);margin-bottom:20px}
+        .section-tag::before{content:'';width:18px;height:2px;background:var(--blue);border-radius:1px}
+        .section-h{font-size:clamp(28px,4vw,50px);font-weight:900;letter-spacing:-0.04em;line-height:1.05;max-width:540px;color:var(--text)}
+        .section-sub{font-size:17px;color:var(--muted);font-weight:400;max-width:480px;margin-top:16px;line-height:1.7}
+        .feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1.5px solid var(--border);border-radius:16px;overflow:hidden;margin-top:64px}
+        .feat-card{background:var(--white);padding:40px 32px;transition:background .2s;cursor:default}
+        .feat-card:hover{background:var(--surface)}
+        .feat-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:22px;font-size:22px}
+        .fi-blue{background:var(--blue-light)}.fi-dark{background:#EEF0F4}.fi-green{background:#DCFCE7}.fi-orange{background:#FEF3C7}.fi-purple{background:#F3E8FF}.fi-red{background:#FEE2E2}
+        [data-theme="dark"] .fi-dark{background:#1a2235}
+        [data-theme="dark"] .fi-green{background:#0d2218}
+        [data-theme="dark"] .fi-orange{background:#221a08}
+        [data-theme="dark"] .fi-purple{background:#1a1030}
+        [data-theme="dark"] .fi-red{background:#2a1020}
+        .feat-title{font-size:16px;font-weight:700;letter-spacing:-0.02em;margin-bottom:10px;color:var(--text)}
+        .feat-desc{font-size:14px;color:var(--muted);line-height:1.65}
+
+        /* ── HOW IT WORKS ── */
+        .how-section{background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:100px 56px}
+        .how-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:start}
+        .steps{display:flex;flex-direction:column;margin-top:48px}
+        .step{display:flex;gap:18px;padding:24px 0;border-bottom:1px solid var(--border);cursor:pointer}
+        .step:first-child{padding-top:0}.step:last-child{border:none}
+        .step-num{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--muted);flex-shrink:0;transition:all .2s;background:var(--white)}
+        .step.active .step-num{background:var(--blue);border-color:var(--blue);color:white}
+        .step-content{flex:1}
+        .step-title{font-size:15px;font-weight:700;color:var(--muted);margin-bottom:6px;transition:color .2s;letter-spacing:-0.01em}
+        .step.active .step-title{color:var(--text)}
+        .step-desc{font-size:13px;color:var(--muted2);line-height:1.65;max-height:0;overflow:hidden;transition:max-height .3s ease}
+        .step.active .step-desc{max-height:80px}
+        .how-visual{background:var(--white);border:1.5px solid var(--border);border-radius:16px;overflow:hidden;min-height:400px;box-shadow:0 8px 32px rgba(0,82,255,.06);position:sticky;top:90px}
+        .vis-header{padding:14px 20px;border-bottom:1px solid var(--border);font-size:12px;font-weight:600;color:var(--muted);background:var(--surface);display:flex;align-items:center;justify-content:space-between;text-transform:uppercase;letter-spacing:.08em}
+        .vis-live{display:flex;align-items:center;gap:6px;color:#22C55E;font-size:11px}
+        .live-dot{width:6px;height:6px;border-radius:50%;background:#22C55E;animation:pulse 2s ease infinite}
+        .vis-body{padding:24px}
+
+        /* ── INTEGRATIONS ── */
+        .int-section{padding:100px 56px;text-align:center}
+        .int-inner{max-width:1100px;margin:0 auto}
+        .int-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:60px}
+        .int-card{background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:28px 16px;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;cursor:default}
+        .int-card:hover{border-color:var(--blue);transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,82,255,.1)}
+        .int-ico{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px}
+        .int-name{font-size:12px;font-weight:600;color:var(--muted)}
+
+        /* ── PRICING ── */
+        .pricing-section{background:var(--surface);border-top:1px solid var(--border);padding:100px 56px}
+        .pricing-inner{max-width:1000px;margin:0 auto;text-align:center}
+        .pricing-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-top:60px;text-align:left}
+        .pcard{background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:36px;position:relative;transition:box-shadow .2s}
+        .pcard:hover{box-shadow:0 8px 32px rgba(0,82,255,.08)}
+        .pcard.featured{border-color:var(--blue);background:linear-gradient(160deg,var(--blue-light) 0%,var(--white) 50%)}
+        .pop-badge{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:var(--blue);color:white;font-size:11px;font-weight:700;padding:4px 16px;border-radius:100px;white-space:nowrap}
+        .plan-name{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:14px}
+        .plan-price{font-size:40px;font-weight:900;letter-spacing:-0.04em;line-height:1;margin-bottom:4px;color:var(--text)}
+        .plan-price sub{font-size:15px;font-weight:500;color:var(--muted)}
+        .plan-tagline{font-size:13px;color:var(--muted);margin-bottom:28px;line-height:1.5}
+        .plan-divider{border:none;border-top:1px solid var(--border);margin:0 0 24px}
+        .plan-feat{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--muted);margin-bottom:10px;line-height:1.5}
+        .ck{color:var(--blue);font-size:14px;flex-shrink:0;margin-top:1px;font-weight:700}
+        .plan-btn{display:block;width:100%;text-align:center;margin-top:28px;padding:12px;border-radius:9px;font-size:14px;font-weight:700;text-decoration:none;transition:all .18s}
+        .pb-outline{border:1.5px solid var(--border2);color:var(--text);background:transparent}
+        .pb-outline:hover{border-color:var(--blue);color:var(--blue)}
+        .pb-solid{background:var(--blue);color:white;border:none}
+        .pb-solid:hover{background:var(--blue-dark);box-shadow:0 4px 16px rgba(0,82,255,.3)}
+
+        /* ── TESTIMONIALS ── */
+        .testi-section{padding:100px 56px}
+        .testi-inner{max-width:1100px;margin:0 auto}
+        .testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:60px}
+        .tcard{background:var(--surface);border:1.5px solid var(--border);border-radius:16px;padding:32px;transition:border-color .2s}
+        .tcard:hover{border-color:var(--blue-mid)}
+        .tquote{font-size:15px;line-height:1.75;color:var(--text);margin-bottom:24px}
+        .tquote em{font-style:normal;font-weight:700;color:var(--blue)}
+        .tauthor{display:flex;align-items:center;gap:12px}
+        .tavatar{width:38px;height:38px;border-radius:50%;color:white;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+        .tname{font-size:14px;font-weight:700;letter-spacing:-0.01em;color:var(--text)}
+        .tmeta{font-size:12px;color:var(--muted)}
+
+        /* ── CTA ── */
+        .cta-section{background:#121212;padding:100px 56px;text-align:center;position:relative;overflow:hidden}
+        .cta-section::before{content:'';position:absolute;width:700px;height:400px;border-radius:50%;background:radial-gradient(ellipse,rgba(0,82,255,.25) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
+        .cta-inner{position:relative;z-index:1}
+        .cta-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(0,82,255,.15);border:1px solid rgba(0,82,255,.3);border-radius:100px;padding:6px 16px;font-size:13px;font-weight:600;color:#6699FF;margin-bottom:32px}
+        .cta-h{font-size:clamp(32px,5vw,68px);font-weight:900;letter-spacing:-0.04em;line-height:1.04;color:white;max-width:680px;margin:0 auto 20px}
+        .cta-h .blue-hl{color:var(--blue)}
+        .cta-sub{color:rgba(255,255,255,.5);font-size:18px;font-weight:400;max-width:440px;margin:0 auto 44px}
+        .cta-actions{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap}
+        .btn-cta-p{background:var(--blue);color:white;padding:16px 36px;border-radius:10px;font-size:16px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:all .18s}
+        .btn-cta-p:hover{background:var(--blue-dark);box-shadow:0 8px 32px rgba(0,82,255,.4);transform:translateY(-2px)}
+        .btn-cta-g{background:transparent;color:rgba(255,255,255,.6);padding:16px 32px;border-radius:10px;font-size:16px;font-weight:600;text-decoration:none;border:1.5px solid rgba(255,255,255,.15);transition:all .18s}
+        .btn-cta-g:hover{color:white;border-color:rgba(255,255,255,.35)}
+
+        /* ── FOOTER ── */
+        footer{background:#121212;border-top:1px solid rgba(255,255,255,.07);padding:32px 56px;display:flex;align-items:center;justify-content:space-between;font-size:13px;flex-wrap:wrap;gap:16px}
+        .footer-logo{display:flex;align-items:center;gap:10px}
+        .footer-logo-txt{font-size:17px;font-weight:800;color:white;letter-spacing:-0.03em}
+        .footer-copy{color:rgba(255,255,255,.3)}
+        .footer-links{display:flex;gap:24px}
+        .footer-links a{color:rgba(255,255,255,.35);text-decoration:none;transition:color .18s}
+        .footer-links a:hover{color:rgba(255,255,255,.7)}
+
+        /* ── ANIMATIONS ── */
+        @keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+        .aos{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
+        .aos.visible{opacity:1;transform:translateY(0)}
+        .aos-d1{transition-delay:.1s}
+
+        /* ── TABLET ≤ 1024px ── */
+        @media(max-width:1024px){
+          nav{padding:0 32px}
+          .logos,.section,.how-section,.int-section,.pricing-section,.testi-section,.cta-section{padding-left:32px;padding-right:32px}
+          footer{padding:28px 32px}
+          .feat-grid{grid-template-columns:repeat(2,1fr)}
+          .how-inner{grid-template-columns:1fr;gap:40px}
+          .how-visual{position:relative;top:0;min-height:300px}
+          .steps{margin-top:32px}
+          .int-grid{grid-template-columns:repeat(4,1fr)}
+          .pricing-grid{grid-template-columns:1fr 1fr;gap:16px}
+          .pricing-grid .pcard:last-child{grid-column:span 2}
+          .testi-grid{grid-template-columns:1fr 1fr}
+          .testi-grid .tcard:last-child{grid-column:span 2}
         }
 
-        /* Gradient text */
-        .gradient-text {
-          background: linear-gradient(135deg, #4361ee 0%, #7b8fff 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
+        /* ── MOBILE ≤ 768px ── */
+        @media(max-width:768px){
+          nav{padding:0 20px;height:60px}
+          .nav-links,.nav-actions{display:none}
+          .hamburger{display:flex}
+          .mobile-menu{display:flex}
+          .hero{padding:80px 20px 56px}
+          .hero h1{font-size:clamp(34px,9vw,48px);letter-spacing:-0.03em}
+          .hero-sub{font-size:16px;max-width:100%}
+          .hero-badge{font-size:12px;padding:5px 14px}
+          .hero-actions{flex-direction:column;align-items:stretch;width:100%;max-width:300px}
+          .btn-primary-lg,.btn-outline-lg{justify-content:center;padding:13px 20px;font-size:15px;width:100%}
+          .hero-visual{margin-top:48px}
+          .browser-url{display:none}
+          .dash-layout{grid-template-columns:1fr}
+          .dash-sidebar{display:none}
+          .dash-main{padding:16px}
+          .dash-topbar-title{font-size:14px}
+          .ws-badge{font-size:11px;padding:4px 9px}
+          .metrics{grid-template-columns:1fr 1fr;gap:8px}
+          .metric{padding:12px}
+          .metric-val{font-size:18px}
+          .metric-lbl{font-size:10px}
+          .metric-delta{font-size:10px}
+          .dash-cards{grid-template-columns:1fr}
+          .logos{padding:32px 20px}
+          .logos-row{gap:16px}
+          .lpill{font-size:12px}
+          .lico{width:26px;height:26px;font-size:13px}
+          .section{padding:64px 20px}
+          .section-h{font-size:clamp(24px,7vw,34px)}
+          .section-sub{font-size:15px}
+          .feat-grid{grid-template-columns:1fr;margin-top:36px}
+          .feat-card{padding:24px 20px}
+          .how-section{padding:64px 20px}
+          .how-inner{gap:32px}
+          .steps{margin-top:24px}
+          .how-visual{min-height:260px}
+          .vis-body{padding:16px}
+          .int-section{padding:64px 20px}
+          .int-grid{grid-template-columns:repeat(2,1fr);gap:10px;margin-top:36px}
+          .int-card{padding:20px 12px}
+          .int-ico{width:36px;height:36px;font-size:18px}
+          .pricing-section{padding:64px 20px}
+          .pricing-grid{grid-template-columns:1fr;margin-top:36px}
+          .pricing-grid .pcard:last-child{grid-column:auto}
+          .pcard{padding:24px 20px}
+          .plan-price{font-size:32px}
+          .testi-section{padding:64px 20px}
+          .testi-grid{grid-template-columns:1fr;margin-top:36px}
+          .testi-grid .tcard:last-child{grid-column:auto}
+          .tcard{padding:22px 18px}
+          .tquote{font-size:14px}
+          .cta-section{padding:64px 20px}
+          .cta-sub{font-size:16px}
+          .cta-actions{flex-direction:column;align-items:stretch;max-width:300px;margin:0 auto;gap:12px}
+          .btn-cta-p,.btn-cta-g{padding:14px 20px;font-size:15px;width:100%;justify-content:center}
+          footer{padding:24px 20px;flex-direction:column;align-items:flex-start;gap:16px}
+          .footer-copy{font-size:12px}
         }
 
-        /* Noise overlay */
-        .noise {
-          position: absolute; inset: 0; pointer-events: none; z-index: 0;
-          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-          opacity: .022;
+        @media(max-width:400px){
+          .hero h1{font-size:32px}
+          .metrics{grid-template-columns:1fr 1fr}
+          .int-grid{grid-template-columns:1fr 1fr}
+          .cta-badge{font-size:11px;padding:5px 12px;text-align:center}
         }
-
-        /* Dropdown transition */
-        .lang-dropdown {
-          transition: opacity .15s, transform .15s;
-          transform-origin: top right;
-        }
-
-        /* Nav link active underline */
-        .nav-active { color: white !important; }
-        .nav-active::after {
-          content: ''; display: block; height: 1.5px;
-          background: #4361ee; border-radius: 2px;
-          margin-top: 2px;
-        }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #0a0c12; }
-        ::-webkit-scrollbar-thumb { background: rgba(67,97,238,.4); border-radius: 3px; }
       `}</style>
 
-      <div className={dmSans.className} style={{ backgroundColor: "#0a0c12", color: "white", minHeight: "100vh", overflowX: "hidden" }}>
+      {/* ROOT WRAPPER with theme */}
+      <div data-theme={theme}>
 
-        {/* ── Navbar ── */}
-        <nav style={{
-          position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
-          backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
-          backgroundColor: scrolled ? "rgba(10,12,18,0.96)" : "rgba(10,12,18,0.82)",
-          borderBottom: "0.5px solid rgba(255,255,255,0.07)",
-          transition: "background-color .3s ease",
-        }}>
-          <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 20px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
+        {/* ── NAV ── */}
+        <nav>
+          <Link href="/landing" className="nav-logo">
+            <FlowdLogo fill={theme === "dark" ? "white" : "#0052FF"} size={36} />
+            <span className="nav-logo-text">Flowd</span>
+          </Link>
 
-            {/* Logo */}
-            <Link href="/landing" style={{ display: "flex", alignItems: "center", textDecoration: "none", flexShrink: 0 }}>
-              <FlowdLogo height={28} />
-            </Link>
+          <ul className="nav-links">
+            {navLinks.map((l) => (
+              <li key={l.href}><a href={l.href}>{l.label}</a></li>
+            ))}
+          </ul>
 
-            {/* Desktop nav links */}
-            <div className="hidden md:flex" style={{ gap: 28, alignItems: "center" }}>
-              {NAV_LINKS.map((l) => (
-                <a key={l.href} href={l.href} style={{
-                  fontSize: 14, fontWeight: 500, textDecoration: "none",
-                  color: activeSection === l.href.slice(1) ? "white" : "rgba(255,255,255,0.52)",
-                  transition: "color .2s",
-                  borderBottom: activeSection === l.href.slice(1) ? "1.5px solid #4361ee" : "1.5px solid transparent",
-                  paddingBottom: 2,
-                }}>
-                  {l.label}
-                </a>
-              ))}
-            </div>
-
-            {/* Desktop right */}
-            <div className="hidden md:flex" style={{ gap: 10, alignItems: "center" }}>
-              {/* Language switcher */}
-              <div style={{ position: "relative" }}>
-                <button
-                  onClick={() => setLangOpen(!langOpen)}
-                  style={{
-                    display: "flex", alignItems: "center", gap: 6,
-                    background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
-                    borderRadius: 8, padding: "7px 12px", cursor: "pointer",
-                    color: "rgba(255,255,255,0.7)", fontSize: 13, fontWeight: 500,
-                    transition: "all .2s",
-                  }}
-                >
-                  <Globe size={14} />
-                  {LANG_OPTIONS.find((o) => o.code === lang)?.flag}{" "}
-                  {lang.toUpperCase()}
-                  <ChevronDown size={12} style={{ transform: langOpen ? "rotate(180deg)" : "none", transition: "transform .2s" }} />
-                </button>
-                {langOpen && (
-                  <div className="lang-dropdown" style={{
-                    position: "absolute", top: "calc(100% + 8px)", right: 0,
-                    backgroundColor: "#141720", border: "1px solid rgba(255,255,255,0.1)",
-                    borderRadius: 10, overflow: "hidden", minWidth: 140,
-                    boxShadow: "0 12px 40px rgba(0,0,0,0.5)",
-                    zIndex: 200,
-                  }}>
-                    {LANG_OPTIONS.map((opt) => (
-                      <button key={opt.code} onClick={() => { setLang(opt.code); setLangOpen(false); }} style={{
-                        width: "100%", display: "flex", alignItems: "center", gap: 10,
-                        padding: "10px 14px", background: lang === opt.code ? "rgba(67,97,238,0.12)" : "none",
-                        border: "none", cursor: "pointer", color: lang === opt.code ? "#7b8fff" : "rgba(255,255,255,0.7)",
-                        fontSize: 13, fontWeight: lang === opt.code ? 600 : 400,
-                        textAlign: isRtl ? "right" : "left",
-                        transition: "background .15s",
-                      }}>
-                        <span>{opt.flag}</span> {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <Link href="/login" style={{
-                color: "rgba(255,255,255,0.6)", fontSize: 14, fontWeight: 500,
-                textDecoration: "none", padding: "8px 16px", borderRadius: 8,
-                border: "1px solid rgba(255,255,255,0.1)", transition: "all .2s",
-              }}>
-                {t.nav.login}
-              </Link>
-              <Link href="/login?tab=signup" className="btn-shine" style={{
-                backgroundColor: "#4361ee", color: "white", fontSize: 14, fontWeight: 700,
-                textDecoration: "none", padding: "9px 18px", borderRadius: 8,
-                display: "inline-flex", alignItems: "center",
-              }}>
-                {t.nav.cta}
-              </Link>
-            </div>
-
-            {/* Mobile right */}
-            <div className="md:hidden" style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              {/* Mobile lang */}
-              <button onClick={() => setLangOpen(!langOpen)} style={{
-                background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: 8, padding: "7px 10px", cursor: "pointer", color: "white", fontSize: 13,
-              }}>
-                {LANG_OPTIONS.find((o) => o.code === lang)?.flag}
+          <div className="nav-actions">
+            {/* Lang switcher */}
+            <div style={{ position: "relative" }}>
+              <button
+                className="lang-btn"
+                onClick={() => setLangOpen(!langOpen)}
+                aria-label="Change language"
+              >
+                {LANG_OPTIONS.find((o) => o.code === lang)?.flag}&nbsp;{lang.toUpperCase()}
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ transform: langOpen ? "rotate(180deg)" : "none", transition: "transform .2s" }}>
+                  <path d="M2 3.5l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
               </button>
               {langOpen && (
-                <div style={{
-                  position: "absolute", top: 60, right: 60, backgroundColor: "#141720",
-                  border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, overflow: "hidden",
-                  boxShadow: "0 12px 40px rgba(0,0,0,0.5)", zIndex: 200,
-                }}>
+                <div className="lang-dropdown">
                   {LANG_OPTIONS.map((opt) => (
-                    <button key={opt.code} onClick={() => { setLang(opt.code); setLangOpen(false); }} style={{
-                      width: "100%", display: "flex", alignItems: "center", gap: 8,
-                      padding: "10px 14px", background: lang === opt.code ? "rgba(67,97,238,0.12)" : "none",
-                      border: "none", cursor: "pointer", color: lang === opt.code ? "#7b8fff" : "rgba(255,255,255,0.7)",
-                      fontSize: 13, whiteSpace: "nowrap",
-                    }}>
+                    <button
+                      key={opt.code}
+                      className={`lang-option${lang === opt.code ? " active" : ""}`}
+                      onClick={() => { setLang(opt.code); setLangOpen(false); }}
+                    >
                       {opt.flag} {opt.label}
                     </button>
                   ))}
                 </div>
               )}
-              <button onClick={() => setMenuOpen(!menuOpen)} style={{
-                background: "none", border: "none", color: "white", cursor: "pointer", padding: 6,
-              }}>
-                {menuOpen ? <X size={22} /> : <Menu size={22} />}
-              </button>
             </div>
+
+            {/* Theme toggle */}
+            <button
+              className="theme-btn"
+              onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+              aria-label="Toggle dark mode"
+            >
+              {theme === "light" ? "🌙" : "☀️"}
+            </button>
+
+            <Link href="/login" className="btn btn-ghost">{t.nav.login}</Link>
+            <Link href="/login?tab=signup" className="btn btn-primary">{t.nav.cta}</Link>
           </div>
 
-          {/* Mobile menu */}
-          {menuOpen && (
-            <div className="md:hidden" style={{
-              backgroundColor: "rgba(10,12,18,0.98)",
-              borderTop: "0.5px solid rgba(255,255,255,0.07)",
-              padding: "12px 20px 20px",
-            }}>
-              {NAV_LINKS.map((l) => (
-                <a key={l.href} href={l.href} onClick={() => setMenuOpen(false)} style={{
-                  display: "block", padding: "13px 0",
-                  color: "rgba(255,255,255,0.65)", textDecoration: "none", fontSize: 15,
-                  borderBottom: "1px solid rgba(255,255,255,0.05)",
-                }}>{l.label}</a>
-              ))}
-              <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 16 }}>
-                <Link href="/login" onClick={() => setMenuOpen(false)} style={{
-                  textAlign: "center", padding: "13px", border: "1px solid rgba(255,255,255,0.15)",
-                  borderRadius: 8, color: "rgba(255,255,255,0.8)", textDecoration: "none",
-                  fontSize: 14, fontWeight: 500,
-                }}>{t.nav.login}</Link>
-                <Link href="/login?tab=signup" onClick={() => setMenuOpen(false)} style={{
-                  textAlign: "center", padding: "13px", backgroundColor: "#4361ee",
-                  borderRadius: 8, color: "white", textDecoration: "none",
-                  fontSize: 14, fontWeight: 700,
-                }}>{t.nav.cta}</Link>
-              </div>
-            </div>
-          )}
+          {/* Hamburger */}
+          <button
+            className={`hamburger${menuOpen ? " open" : ""}`}
+            id="hamburger"
+            aria-label="Open menu"
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
+            <span /><span /><span />
+          </button>
         </nav>
 
-        <main onClick={() => setLangOpen(false)}>
-
-          {/* ── Hero ── */}
-          <section id="hero" ref={heroRef} style={{
-            position: "relative", minHeight: "100vh",
-            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-            padding: "100px 20px 60px", textAlign: "center", overflow: "hidden",
-          }}>
-            <div className="noise" />
-            {/* Top glow */}
-            <div style={{
-              position: "absolute", top: "10%", left: "50%", transform: "translateX(-50%)",
-              width: 800, height: 500, borderRadius: "50%",
-              background: "radial-gradient(ellipse, rgba(67,97,238,0.2) 0%, transparent 68%)",
-              pointerEvents: "none", zIndex: 0,
-            }} />
-
-            <div style={{ position: "relative", zIndex: 1, maxWidth: 800, width: "100%" }}>
-              {/* Badge */}
-              <div data-reveal style={{
-                display: "inline-flex", alignItems: "center", gap: 8,
-                backgroundColor: "rgba(67,97,238,0.1)", border: "1px solid rgba(67,97,238,0.25)",
-                borderRadius: 100, padding: "6px 16px",
-                fontSize: 13, fontWeight: 500, color: "#7b8fff", marginBottom: 28,
-              }}>
-                🇩🇿 {t.hero.badge}
-              </div>
-
-              {/* Headline — word-by-word stagger */}
-              <h1 className={outfit.className} style={{
-                fontSize: "clamp(28px, 5.5vw, 58px)", fontWeight: 800,
-                lineHeight: 1.1, letterSpacing: "-0.025em",
-                marginBottom: 22, color: "white",
-              }}>
-                {t.hero.h1a.split(" ").map((w, i) => (
-                  <span key={i} className="hero-word" style={{ animationDelay: `${i * 60}ms`, marginRight: "0.25em" }}>{w}</span>
-                ))}{" "}
-                <span className="gradient-text hero-word" style={{ animationDelay: "240ms" }}>{t.hero.h1b}</span>
-                {"."}<br />
-                {t.hero.h1c.split(" ").map((w, i) => (
-                  <span key={i} className="hero-word" style={{ animationDelay: `${(i + 5) * 60 + 100}ms`, marginRight: "0.25em" }}>{w}</span>
-                ))}
-              </h1>
-
-              {/* Subheadline */}
-              <p data-reveal data-delay="2" style={{
-                fontSize: "clamp(15px, 2vw, 18px)",
-                color: "rgba(255,255,255,0.52)", lineHeight: 1.72,
-                maxWidth: 580, margin: "0 auto 36px",
-              }}>
-                {t.hero.sub}
-              </p>
-
-              {/* CTAs */}
-              <div data-reveal data-delay="3" className="flex flex-col sm:flex-row flex-wrap gap-3 justify-center mb-6">
-                <Link href="/login?tab=signup" className="btn-shine w-full sm:w-auto" style={{
-                  display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8,
-                  backgroundColor: "#4361ee", color: "white",
-                  padding: "14px 28px", borderRadius: 10,
-                  fontSize: 15, fontWeight: 700, textDecoration: "none",
-                }}>
-                  {t.hero.cta}
-                </Link>
-                <a href="#features" className="w-full sm:w-auto" style={{
-                  display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8,
-                  border: "1px solid rgba(255,255,255,0.14)", color: "rgba(255,255,255,0.78)",
-                  padding: "14px 28px", borderRadius: 10, fontSize: 15, fontWeight: 500,
-                  textDecoration: "none", backgroundColor: "transparent",
-                  transition: "background .2s, border-color .2s",
-                }}>
-                  {t.hero.demo}
-                </a>
-              </div>
-
-              {/* Social proof */}
-              <p data-reveal data-delay="4" style={{ fontSize: 13, color: "rgba(255,255,255,0.28)", marginBottom: 60 }}>
-                {t.hero.social}
-              </p>
-            </div>
-
-            {/* Dashboard mockup */}
-            <div data-reveal data-delay="5" style={{ position: "relative", width: "100%", maxWidth: 840, zIndex: 1, overflow: "hidden" }}>
-              <div style={{
-                position: "absolute", inset: -80,
-                background: "radial-gradient(ellipse at center, rgba(67,97,238,0.15) 0%, transparent 65%)",
-                pointerEvents: "none",
-              }} />
-              <div className="float-card" style={{
-                backgroundColor: "#141720",
-                border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: 18, overflow: "hidden",
-                boxShadow: "0 48px 100px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.06)",
-              }}>
-                {/* Window chrome */}
-                <div style={{
-                  display: "flex", alignItems: "center", justifyContent: "space-between",
-                  padding: "12px 18px",
-                  backgroundColor: "rgba(255,255,255,0.025)",
-                  borderBottom: "1px solid rgba(255,255,255,0.05)",
-                }}>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    {["#f97066", "#ffd43b", "#3ecf8e"].map((c) => (
-                      <div key={c} style={{ width: 10, height: 10, borderRadius: "50%", backgroundColor: c, opacity: 0.75 }} />
-                    ))}
-                  </div>
-                  <span style={{ fontSize: 12, color: "rgba(255,255,255,0.28)", fontFamily: "monospace" }}>flowd — Commandes</span>
-                  <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                    <div className="live-dot" style={{ width: 7, height: 7, borderRadius: "50%", backgroundColor: "#3ecf8e" }} />
-                    <span style={{ fontSize: 11, color: "#3ecf8e", fontWeight: 700 }}>Live</span>
-                  </div>
-                </div>
-
-                {/* Table header */}
-                <div style={{
-                  display: "grid", gridTemplateColumns: "90px 1fr 1.4fr 110px 110px",
-                  gap: 12, padding: "9px 18px",
-                  fontSize: 10, color: "rgba(255,255,255,0.28)",
-                  fontWeight: 700, letterSpacing: "0.08em",
-                  borderBottom: "1px solid rgba(255,255,255,0.04)",
-                }}>
-                  <span>SOURCE</span><span>CLIENT</span><span>PRODUIT</span><span>MONTANT</span><span>STATUT</span>
-                </div>
-
-                {MOCK_ORDERS.map((order, i) => (
-                  <div key={order.id} className="order-row" style={{
-                    display: "grid", gridTemplateColumns: "90px 1fr 1.4fr 110px 110px",
-                    gap: 12, padding: "12px 18px",
-                    borderBottom: i < MOCK_ORDERS.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none",
-                    alignItems: "center", transition: "background .15s",
-                  }}>
-                    <span style={{
-                      fontSize: 11, fontWeight: 700, color: order.sourceColor,
-                      backgroundColor: `${order.sourceColor}1a`,
-                      padding: "3px 9px", borderRadius: 100, display: "inline-block", whiteSpace: "nowrap",
-                    }}>{order.source}</span>
-                    <span style={{ fontSize: 13, color: "rgba(255,255,255,0.88)", fontWeight: 500 }}>{order.name}</span>
-                    <span style={{ fontSize: 12, color: "rgba(255,255,255,0.42)" }}>{order.product}</span>
-                    <span style={{ fontSize: 13, color: "white", fontWeight: 700 }}>{order.price}</span>
-                    <span style={{
-                      fontSize: 11, fontWeight: 700, color: order.statusColor,
-                      backgroundColor: `${order.statusColor}1a`,
-                      padding: "3px 9px", borderRadius: 100, display: "inline-block", whiteSpace: "nowrap",
-                    }}>{order.status}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* ── Problems ── */}
-          <section id="problems" style={{ padding: "80px 20px", backgroundColor: "#0f1119" }}>
-            <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-              <h2 data-reveal className={outfit.className} style={{
-                fontSize: "clamp(26px, 3.5vw, 36px)", fontWeight: 700, color: "white",
-                textAlign: "center", marginBottom: 52,
-              }}>{t.problems.title}</h2>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 18 }}>
-                {t.problems.cards.map((p, i) => (
-                  <div key={i} data-reveal data-delay={`${i + 1}` as "1"|"2"|"3"} className="feat-card" style={{
-                    backgroundColor: "#141720", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, padding: "28px 24px",
-                  }}>
-                    <div style={{ fontSize: 36, marginBottom: 16 }}>{p.icon}</div>
-                    <h3 className={outfit.className} style={{ fontSize: 17, fontWeight: 700, color: "white", marginBottom: 8 }}>{p.title}</h3>
-                    <p style={{ fontSize: 14, color: "rgba(255,255,255,0.48)", lineHeight: 1.65 }}>{p.desc}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* ── Features ── */}
-          <section id="features" style={{ padding: "80px 20px" }}>
-            <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-              <div style={{ textAlign: "center", marginBottom: 52 }}>
-                <div data-reveal style={{
-                  display: "inline-block", fontSize: 11, fontWeight: 700,
-                  letterSpacing: "0.12em", color: "#4361ee", marginBottom: 14,
-                }}>{t.features.label}</div>
-                <h2 data-reveal data-delay="1" className={outfit.className} style={{
-                  fontSize: "clamp(26px, 3.5vw, 36px)", fontWeight: 700, color: "white",
-                }}>{t.features.title}</h2>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 18 }}>
-                {t.features.cards.map((card, i) => (
-                  <div key={i} data-reveal data-delay={`${(i % 3) + 1}` as "1"|"2"|"3"} className="feat-card" style={{
-                    backgroundColor: "#141720", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, padding: "28px 24px",
-                  }}>
-                    <div style={{
-                      width: 48, height: 48, borderRadius: 12,
-                      backgroundColor: `${card.color}18`,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: 24, marginBottom: 18,
-                    }}>{card.icon}</div>
-                    <h3 className={outfit.className} style={{ fontSize: 16, fontWeight: 700, color: "white", marginBottom: 8 }}>{card.title}</h3>
-                    <p style={{ fontSize: 14, color: "rgba(255,255,255,0.48)", lineHeight: 1.65 }}>{card.desc}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* ── Chatbot Highlight ── */}
-          <section id="chatbot" style={{ padding: "80px 20px", backgroundColor: "#0f1119" }}>
-            <div style={{ maxWidth: 1100, margin: "0 auto" }}
-              className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-              <div data-reveal>
-                <div style={{
-                  display: "inline-block", fontSize: 11, fontWeight: 700, letterSpacing: "0.12em",
-                  color: "#c97aff", backgroundColor: "rgba(201,122,255,0.1)",
-                  padding: "4px 14px", borderRadius: 100, marginBottom: 18,
-                }}>{t.chatbot.label}</div>
-                <h2 className={outfit.className} style={{
-                  fontSize: "clamp(24px, 3.2vw, 36px)", fontWeight: 700,
-                  color: "white", lineHeight: 1.2, marginBottom: 16,
-                }}>{t.chatbot.title}</h2>
-                <p style={{ fontSize: 15, color: "rgba(255,255,255,0.5)", lineHeight: 1.72, marginBottom: 28 }}>{t.chatbot.desc}</p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {t.chatbot.bullets.map((item, i) => (
-                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 11 }}>
-                      <div style={{
-                        width: 22, height: 22, borderRadius: "50%",
-                        backgroundColor: "rgba(62,207,142,0.13)",
-                        display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                      }}>
-                        <Check size={12} color="#3ecf8e" strokeWidth={3} />
-                      </div>
-                      <span style={{ fontSize: 14, color: "rgba(255,255,255,0.72)" }}>{item}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Chat mockup */}
-              <div data-reveal data-delay="2">
-                <div style={{
-                  backgroundColor: "#141720", border: "1px solid rgba(255,255,255,0.08)",
-                  borderRadius: 20, overflow: "hidden",
-                  boxShadow: "0 24px 60px rgba(0,0,0,0.45)",
-                }}>
-                  <div style={{
-                    display: "flex", alignItems: "center", gap: 12, padding: "14px 18px",
-                    backgroundColor: "rgba(255,255,255,0.02)",
-                    borderBottom: "1px solid rgba(255,255,255,0.05)",
-                  }}>
-                    <div style={{
-                      width: 34, height: 34, borderRadius: "50%",
-                      background: "linear-gradient(135deg, #4361ee, #c97aff)",
-                      display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15,
-                    }}>🤖</div>
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: "white" }}>Flowd AI</div>
-                      <div style={{ fontSize: 11, color: "#c97aff", marginTop: 1 }}>via Instagram</div>
-                    </div>
-                    <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 5 }}>
-                      <div className="live-dot" style={{ width: 7, height: 7, borderRadius: "50%", backgroundColor: "#3ecf8e" }} />
-                      <span style={{ fontSize: 11, color: "#3ecf8e", fontWeight: 600 }}>En ligne</span>
-                    </div>
-                  </div>
-                  <div style={{ padding: "18px", display: "flex", flexDirection: "column", gap: 11 }}>
-                    {[
-                      { from: "client", text: "Salam, wach andkom taille 42 f les chaussures ?" },
-                      { from: "bot", text: "Wa alaykom salam! Ih andna taille 42 👟\nPrix: 4 100 DA. Livraison Blida 2-3 jours.\nTridha ncréa lak commande?" },
-                      { from: "client", text: "Ih, commande 🙌" },
-                      { from: "bot", text: "Parfait! Donnez-moi votre nom complet et numéro de téléphone 📝" },
-                    ].map((msg, i) => (
-                      <div key={i} style={{ display: "flex", justifyContent: msg.from === "bot" ? "flex-end" : "flex-start" }}>
-                        <div style={{
-                          background: msg.from === "bot" ? "linear-gradient(135deg, #4361ee, #7b8fff)" : "rgba(255,255,255,0.08)",
-                          borderRadius: msg.from === "bot" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
-                          padding: "10px 14px", maxWidth: "86%",
-                          fontSize: 13, color: "rgba(255,255,255,0.9)", lineHeight: 1.55,
-                          whiteSpace: "pre-line",
-                        }}>{msg.text}</div>
-                      </div>
-                    ))}
-                    <div style={{ display: "flex", alignItems: "center", gap: 4, paddingLeft: 2 }}>
-                      {[0, 1, 2].map((d) => (
-                        <div key={d} style={{
-                          width: 6, height: 6, borderRadius: "50%",
-                          backgroundColor: "rgba(255,255,255,0.22)",
-                          animation: `pulse-dot 1.4s ease-in-out ${d * 0.2}s infinite`,
-                        }} />
-                      ))}
-                      <span style={{ fontSize: 11, color: "rgba(255,255,255,0.28)", marginLeft: 5 }}>Le client tape...</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* ── Delivery Highlight ── */}
-          <section id="delivery" style={{ padding: "80px 20px" }}>
-            <div style={{ maxWidth: 1100, margin: "0 auto" }}
-              className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-              {/* Delivery card */}
-              <div data-reveal className="order-2 lg:order-1">
-                <div style={{
-                  backgroundColor: "#141720", border: "1px solid rgba(255,255,255,0.08)",
-                  borderRadius: 20, padding: "28px",
-                  boxShadow: "0 24px 60px rgba(0,0,0,0.4)",
-                }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", color: "rgba(255,255,255,0.3)", marginBottom: 16 }}>COMMANDE #2847</div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 0, marginBottom: 22 }}>
-                    {[
-                      { label: "Client", value: "Amira Benali" },
-                      { label: "Téléphone", value: "0556 234 890" },
-                      { label: "Wilaya", value: "09 — Blida" },
-                      { label: "Produit", value: "Chaussures 42 × 1" },
-                      { label: "Montant COD", value: "4 100 DA" },
-                    ].map((row) => (
-                      <div key={row.label} style={{
-                        display: "flex", justifyContent: "space-between",
-                        fontSize: 13, padding: "9px 0",
-                        borderBottom: "1px solid rgba(255,255,255,0.04)",
-                      }}>
-                        <span style={{ color: "rgba(255,255,255,0.38)" }}>{row.label}</span>
-                        <span style={{ color: "white", fontWeight: 600 }}>{row.value}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <button style={{
-                    width: "100%", backgroundColor: "#4361ee", color: "white",
-                    border: "none", borderRadius: 11, padding: "14px",
-                    fontSize: 14, fontWeight: 700, cursor: "pointer", marginBottom: 12,
-                    boxShadow: "0 4px 20px rgba(67,97,238,0.4)",
-                    transition: "background .2s",
-                  }}>Envoyer à Yalidine →</button>
-                  <div style={{
-                    backgroundColor: "rgba(62,207,142,0.07)", border: "1px solid rgba(62,207,142,0.2)",
-                    borderRadius: 10, padding: "11px 15px",
-                    display: "flex", alignItems: "center", gap: 9,
-                  }}>
-                    <Check size={14} color="#3ecf8e" strokeWidth={3} />
-                    <span style={{ fontSize: 13, color: "#3ecf8e", fontWeight: 700 }}>#YLD-88231 créé automatiquement</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Text */}
-              <div data-reveal data-delay="2" className="order-1 lg:order-2">
-                <div style={{
-                  display: "inline-block", fontSize: 11, fontWeight: 700, letterSpacing: "0.12em",
-                  color: "#3ecf8e", backgroundColor: "rgba(62,207,142,0.1)",
-                  padding: "4px 14px", borderRadius: 100, marginBottom: 18,
-                }}>{t.delivery.label}</div>
-                <h2 className={outfit.className} style={{
-                  fontSize: "clamp(24px, 3.2vw, 36px)", fontWeight: 700,
-                  color: "white", lineHeight: 1.2, marginBottom: 16,
-                }}>{t.delivery.title}</h2>
-                <p style={{ fontSize: 15, color: "rgba(255,255,255,0.5)", lineHeight: 1.72, marginBottom: 36 }}>{t.delivery.desc}</p>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
-                  {t.delivery.stats.map((item) => (
-                    <div key={item.label} style={{
-                      textAlign: "center", padding: "18px 10px",
-                      backgroundColor: "#141720", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12,
-                    }}>
-                      <div className={outfit.className} style={{ fontSize: 26, fontWeight: 800, color: "#4361ee", marginBottom: 4 }}>{item.stat}</div>
-                      <div style={{ fontSize: 11, color: "rgba(255,255,255,0.38)", lineHeight: 1.4 }}>{item.label}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* ── Stats ── */}
-          <section id="stats" style={{ padding: "80px 20px", backgroundColor: "#0f1119" }}>
-            <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-              <div className="grid grid-cols-2 md:grid-cols-4" style={{
-                borderRadius: 18, overflow: "hidden",
-                border: "1px solid rgba(255,255,255,0.07)", marginBottom: 44,
-              }}>
-                {t.stats.map((item, i) => (
-                  <div key={i} data-reveal data-delay={`${i + 1}` as "1"|"2"|"3"|"4"} style={{
-                    backgroundColor: "#141720", padding: "32px 24px", textAlign: "center",
-                    borderRight: i < t.stats.length - 1 ? "1px solid rgba(255,255,255,0.07)" : "none",
-                  }}>
-                    <div className={`${outfit.className} gradient-text`} style={{ fontSize: 40, fontWeight: 800, marginBottom: 10 }}>
-                      {item.stat}
-                    </div>
-                    <div style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", lineHeight: 1.5 }}>{item.label}</div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Testimonial */}
-              <div data-reveal style={{
-                backgroundColor: "#141720", border: "1px solid rgba(255,255,255,0.07)",
-                borderRadius: 20, padding: "clamp(28px, 5vw, 48px)", textAlign: "center",
-                position: "relative", overflow: "hidden",
-              }}>
-                <div style={{
-                  position: "absolute", top: -80, left: "50%", transform: "translateX(-50%)",
-                  width: 400, height: 250,
-                  background: "radial-gradient(ellipse, rgba(67,97,238,0.07) 0%, transparent 70%)",
-                  pointerEvents: "none",
-                }} />
-                <div style={{ fontSize: 44, opacity: 0.35, lineHeight: 1, marginBottom: 18 }}>❝</div>
-                <p className={outfit.className} style={{
-                  fontSize: "clamp(16px, 2.2vw, 21px)", fontWeight: 600,
-                  color: "white", lineHeight: 1.55, maxWidth: 640, margin: "0 auto 24px",
-                }}>{t.testimonial.quote}</p>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
-                  <div style={{
-                    width: 40, height: 40, borderRadius: "50%",
-                    background: "linear-gradient(135deg, #4361ee, #c97aff)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 15, fontWeight: 800, color: "white",
-                  }}>A</div>
-                  <div style={{ textAlign: "left" }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: "white" }}>{t.testimonial.name}</div>
-                    <div style={{ fontSize: 12, color: "rgba(255,255,255,0.38)" }}>{t.testimonial.role}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* ── Integrations ── */}
-          <section id="integrations" style={{ padding: "80px 20px" }}>
-            <div style={{ maxWidth: 860, margin: "0 auto", textAlign: "center" }}>
-              <h2 data-reveal className={outfit.className} style={{
-                fontSize: "clamp(24px, 3.2vw, 36px)", fontWeight: 700, color: "white", marginBottom: 12,
-              }}>{t.integrations.title}</h2>
-              <p data-reveal data-delay="1" style={{ fontSize: 15, color: "rgba(255,255,255,0.38)", marginBottom: 44 }}>
-                {t.integrations.sub}
-              </p>
-              <div data-reveal data-delay="2" style={{ display: "flex", flexWrap: "wrap", gap: 11, justifyContent: "center" }}>
-                {INTEGRATIONS.map((name) => (
-                  <div key={name} className="int-pill" style={{
-                    backgroundColor: "#141720", border: "1px solid rgba(255,255,255,0.08)",
-                    borderRadius: 100, padding: "9px 20px",
-                    fontSize: 14, fontWeight: 500, color: "rgba(255,255,255,0.7)",
-                  }}>{name}</div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* ── CTA ── */}
-          <section id="pricing" style={{
-            padding: "80px 20px", textAlign: "center",
-            position: "relative", overflow: "hidden", backgroundColor: "#0f1119",
-          }}>
-            <div className="noise" />
-            <div style={{
-              position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)",
-              width: 700, height: 400,
-              background: "radial-gradient(ellipse, rgba(67,97,238,0.15) 0%, transparent 68%)",
-              pointerEvents: "none",
-            }} />
-            <div style={{ position: "relative", zIndex: 1, maxWidth: 680, margin: "0 auto" }}>
-              <h2 data-reveal className={outfit.className} style={{
-                fontSize: "clamp(26px, 4vw, 46px)", fontWeight: 800,
-                color: "white", lineHeight: 1.12, marginBottom: 18,
-              }}>{t.cta.title}</h2>
-              <p data-reveal data-delay="1" style={{
-                fontSize: 16, color: "rgba(255,255,255,0.46)", lineHeight: 1.7,
-                marginBottom: 40, maxWidth: 540, margin: "0 auto 40px",
-              }}>{t.cta.sub}</p>
-              <div data-reveal data-delay="2" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
-                <Link href="/login?tab=signup" className="btn-shine w-full sm:w-auto" style={{
-                  display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8,
-                  backgroundColor: "#4361ee", color: "white",
-                  padding: "16px 40px", borderRadius: 12,
-                  fontSize: 16, fontWeight: 700, textDecoration: "none",
-                }}>
-                  {t.cta.btn}
-                </Link>
-                <p style={{ fontSize: 13, color: "rgba(255,255,255,0.26)" }}>{t.cta.note}</p>
-              </div>
-            </div>
-          </section>
-        </main>
-
-        {/* ── Footer ── */}
-        <footer style={{
-          borderTop: "0.5px solid rgba(255,255,255,0.07)",
-          padding: "44px 20px", backgroundColor: "#0a0c12",
-        }}>
-          <div style={{
-            maxWidth: 1100, margin: "0 auto",
-            display: "flex", flexWrap: "wrap",
-            flexDirection: "column",
-            alignItems: "center", gap: 20, textAlign: "center",
-          }} className="sm:flex-row sm:justify-between sm:text-left sm:items-center">
-            <div>
-              <FlowdLogo height={24} />
-              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.28)", marginTop: 8 }}>{t.footer.tagline}</p>
-            </div>
-            <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
-              {NAV_LINKS.map((l) => (
-                <a key={l.href} href={l.href} style={{
-                  fontSize: 13, color: "rgba(255,255,255,0.38)", textDecoration: "none",
-                  transition: "color .2s",
+        {/* ── MOBILE MENU ── */}
+        <div className={`mobile-menu${menuOpen ? " open" : ""}`} onClick={() => setMenuOpen(false)}>
+          {navLinks.map((l) => (
+            <a key={l.href} href={l.href} onClick={closeMenu}>{l.label}</a>
+          ))}
+          {/* Mobile lang + theme */}
+          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            {LANG_OPTIONS.map((opt) => (
+              <button
+                key={opt.code}
+                onClick={(e) => { e.stopPropagation(); setLang(opt.code); }}
+                style={{
+                  background: lang === opt.code ? "var(--blue-light)" : "transparent",
+                  border: `1.5px solid ${lang === opt.code ? "var(--blue)" : "var(--border2)"}`,
+                  borderRadius: 8, padding: "6px 12px", cursor: "pointer",
+                  fontSize: 13, fontWeight: lang === opt.code ? 700 : 500,
+                  color: lang === opt.code ? "var(--blue)" : "var(--muted)", fontFamily: "var(--font)",
                 }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.8)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.38)")}
-                >{l.label}</a>
+              >
+                {opt.flag} {opt.label}
+              </button>
+            ))}
+            <button
+              className="theme-btn"
+              onClick={(e) => { e.stopPropagation(); setTheme(theme === "light" ? "dark" : "light"); }}
+              aria-label="Toggle dark mode"
+            >
+              {theme === "light" ? "🌙" : "☀️"}
+            </button>
+          </div>
+          <div className="mobile-menu-actions">
+            <Link href="/login" className="btn btn-ghost" style={{ fontSize: 15, padding: "12px 24px", justifyContent: "center" }} onClick={closeMenu}>
+              {t.nav.login}
+            </Link>
+            <Link href="/login?tab=signup" className="btn btn-primary" style={{ fontSize: 15, padding: "12px 24px", justifyContent: "center" }} onClick={closeMenu}>
+              {t.nav.cta}
+            </Link>
+          </div>
+        </div>
+
+        {/* ── HERO ── */}
+        <section className="hero" onClick={() => setLangOpen(false)}>
+          <div className="hero-badge"><span className="badge-pulse" />{t.hero.badge}</div>
+          <h1>
+            {t.hero.h1a}<br />
+            <span className="blue">{t.hero.h1b}</span>
+          </h1>
+          <p className="hero-sub">{t.hero.sub}</p>
+          <div className="hero-actions">
+            <Link href="/login?tab=signup" className="btn btn-primary btn-primary-lg">
+              {t.hero.cta}
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            </Link>
+            <a href="#how" className="btn-outline-lg">{t.hero.demo}</a>
+          </div>
+          <p className="hero-note">{t.hero.note}</p>
+
+          {/* Dashboard mockup */}
+          <div className="hero-visual">
+            <div className="browser-frame">
+              <div className="browser-bar">
+                <div className="b-dot b1" /><div className="b-dot b2" /><div className="b-dot b3" />
+                <div className="browser-url">app.flowd.dz/dashboard</div>
+              </div>
+              <div className="dash-layout">
+                <div className="dash-sidebar">
+                  <div className="dash-sidebar-logo">
+                    <FlowdLogo fill="white" size={28} />
+                    <span className="dash-sidebar-logo-text">Flowd</span>
+                  </div>
+                  <div className="snav active">
+                    <svg viewBox="0 0 15 15" fill="none"><rect x="1" y="1" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.3" /><rect x="8.5" y="1" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.3" /><rect x="1" y="8.5" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.3" /><rect x="8.5" y="8.5" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.3" /></svg>
+                    Dashboard
+                  </div>
+                  <div className="snav">
+                    <svg viewBox="0 0 15 15" fill="none"><path d="M1.5 3h12M1.5 7.5h8M1.5 12h10" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" /></svg>
+                    Orders
+                  </div>
+                  <div className="snav">
+                    <svg viewBox="0 0 15 15" fill="none"><path d="M7.5 1C4.46 1 2 3.46 2 6.5c0 1.6.7 3.04 1.81 4.05L2 13l2.61-1.17A5.46 5.46 0 007.5 12c3.04 0 5.5-2.46 5.5-5.5S10.54 1 7.5 1z" stroke="currentColor" strokeWidth="1.3" /></svg>
+                    Chatbot
+                  </div>
+                  <div className="snav">
+                    <svg viewBox="0 0 15 15" fill="none"><path d="M2.5 6a5 5 0 0110 0v5.5a1 1 0 01-1 1h-8a1 1 0 01-1-1V6z" stroke="currentColor" strokeWidth="1.3" /><path d="M5 6V4a2.5 2.5 0 015 0v2" stroke="currentColor" strokeWidth="1.3" /></svg>
+                    Delivery
+                  </div>
+                  <div className="snav" style={{ marginTop: "auto" }}>
+                    <svg viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.3" /><path d="M1.5 13c0-2.76 2.69-5 6-5s6 2.24 6 5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" /></svg>
+                    Settings
+                  </div>
+                </div>
+                <div className="dash-main">
+                  <div className="dash-topbar">
+                    <div className="dash-topbar-title">Dashboard</div>
+                    <div className="ws-badge"><div className="ws-dot" />Mon Workspace · Alger</div>
+                  </div>
+                  <div className="metrics">
+                    <div className="metric"><div className="metric-lbl">Orders today</div><div className="metric-val">147</div><div className="metric-delta">↑ 12% vs hier</div></div>
+                    <div className="metric"><div className="metric-lbl">Revenue (DA)</div><div className="metric-val">384K</div><div className="metric-delta">↑ 8% cette semaine</div></div>
+                    <div className="metric"><div className="metric-lbl">Delivered</div><div className="metric-val">89%</div><div className="metric-delta">Rate ce mois</div></div>
+                    <div className="metric"><div className="metric-lbl">AI chats</div><div className="metric-val">24</div><div className="metric-delta blue">↑ Tout géré</div></div>
+                  </div>
+                  <div className="dash-cards">
+                    <div className="dcard">
+                      <div className="dcard-title">Recent orders</div>
+                      <div className="orow"><div><div className="oname">Amira Benali</div><div className="owil">Alger · Instagram</div></div><div className="sbadge sb-conf">Confirmed</div></div>
+                      <div className="orow"><div><div className="oname">Yacine Hadj</div><div className="owil">Oran · Messenger</div></div><div className="sbadge sb-ship">Shipped</div></div>
+                      <div className="orow"><div><div className="oname">Selma Kaci</div><div className="owil">Constantine · Manuel</div></div><div className="sbadge sb-pend">Pending</div></div>
+                    </div>
+                    <div className="dcard">
+                      <div className="dcard-title">AI Chatbot · Live</div>
+                      <div style={{ marginBottom: 4 }}><div className="cb-label">Customer</div><div className="cbubble cb-user">wach 3andkom hoodie taille L?</div></div>
+                      <div><div className="cb-label">Flowd AI</div><div className="cbubble cb-bot">Ah wah! 3andna L, noir w gris. 2800 DA. Ndir lik commande? 😊<span className="cursor-blink" /></div></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── LOGOS ── */}
+        <div className="logos aos" onClick={() => setLangOpen(false)}>
+          <div className="logos-ttl">{t.logos}</div>
+          <div className="logos-row">
+            <div className="lpill"><div className="lico" style={{ background: "#FFF0F0" }}>📸</div>Instagram</div>
+            <div className="lpill"><div className="lico" style={{ background: "#EBF5FF" }}>💬</div>Messenger</div>
+            <div className="lpill"><div className="lico" style={{ background: "#F0FFF4" }}>📦</div>Yalidine</div>
+            <div className="lpill"><div className="lico" style={{ background: "#FFF8EB" }}>🛍</div>Shopify</div>
+            <div className="lpill"><div className="lico" style={{ background: "#F5F0FF" }}>🚀</div>ZR Express</div>
+            <div className="lpill"><div className="lico" style={{ background: "#EBFFF8" }}>📊</div>Google Sheets</div>
+          </div>
+        </div>
+
+        {/* ── FEATURES ── */}
+        <section className="section" id="features" onClick={() => setLangOpen(false)}>
+          <div className="aos">
+            <div className="section-tag">{t.features.tag}</div>
+            <h2 className="section-h">{t.features.h}</h2>
+            <p className="section-sub">{t.features.sub}</p>
+          </div>
+          <div className="feat-grid aos aos-d1">
+            {t.features.cards.map((card, i) => {
+              const icons = ["fi-blue", "fi-dark", "fi-green", "fi-orange", "fi-purple", "fi-red"];
+              return (
+                <div key={i} className="feat-card">
+                  <div className={`feat-icon ${icons[i]}`}>{card.icon}</div>
+                  <div className="feat-title">{card.title}</div>
+                  <div className="feat-desc">{card.desc}</div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* ── HOW IT WORKS ── */}
+        <section className="how-section" id="how" onClick={() => setLangOpen(false)}>
+          <div className="how-inner">
+            <div>
+              <div className="aos">
+                <div className="section-tag">{t.how.tag}</div>
+                <h2 className="section-h" style={{ maxWidth: 400 }}>{t.how.h}</h2>
+              </div>
+              <div className="steps">
+                {t.how.steps.map((step, i) => (
+                  <div
+                    key={i}
+                    className={`step${activeStep === i ? " active" : ""}`}
+                    onClick={() => setActiveStep(i)}
+                  >
+                    <div className="step-num">{i + 1}</div>
+                    <div className="step-content">
+                      <div className="step-title">{step.title}</div>
+                      <div className="step-desc">{step.desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="how-visual aos aos-d1">
+              <div className="vis-header">
+                <span>{VIS_STEPS[activeStep].title}</span>
+                <div className="vis-live"><div className="live-dot" />Live</div>
+              </div>
+              <div className="vis-body" dangerouslySetInnerHTML={{ __html: VIS_STEPS[activeStep].html }} />
+            </div>
+          </div>
+        </section>
+
+        {/* ── INTEGRATIONS ── */}
+        <section className="int-section" id="integrations" onClick={() => setLangOpen(false)}>
+          <div className="int-inner">
+            <div className="aos">
+              <div className="section-tag" style={{ justifyContent: "center" }}>{t.integrations.tag}</div>
+              <h2 className="section-h" style={{ maxWidth: 500, margin: "0 auto", textAlign: "center" }}>{t.integrations.h}</h2>
+              <p className="section-sub" style={{ margin: "16px auto 0", textAlign: "center" }}>{t.integrations.sub}</p>
+            </div>
+            <div className="int-grid aos aos-d1">
+              {[
+                { ico: "📸", bg: "#FFF0F0", name: "Instagram" },
+                { ico: "💬", bg: "#EBF5FF", name: "Messenger" },
+                { ico: "📱", bg: "#F0FFF4", name: "WhatsApp" },
+                { ico: "🛍", bg: "#FFF8EB", name: "Shopify" },
+                { ico: "🔷", bg: "#EBF0FF", name: "WooCommerce" },
+                { ico: "📊", bg: "#F0FFF4", name: "Google Sheets" },
+                { ico: "📦", bg: "#FFF0F0", name: "Yalidine" },
+                { ico: "🚀", bg: "#FFF8EB", name: "ZR Express" },
+                { ico: "✈️", bg: "#F5F0FF", name: "Maystro" },
+                { ico: "⚡", bg: "#FFF0F8", name: "EddyApp" },
+              ].map((item) => (
+                <div key={item.name} className="int-card">
+                  <div className="int-ico" style={{ background: item.bg }}>{item.ico}</div>
+                  <div className="int-name">{item.name}</div>
+                </div>
               ))}
             </div>
-            <p style={{ fontSize: 13, color: "rgba(255,255,255,0.2)" }}>{t.footer.copy}</p>
+          </div>
+        </section>
+
+        {/* ── PRICING ── */}
+        <section className="pricing-section" id="pricing" onClick={() => setLangOpen(false)}>
+          <div className="pricing-inner">
+            <div className="aos">
+              <div className="section-tag" style={{ justifyContent: "center" }}>{t.pricing.tag}</div>
+              <h2 className="section-h" style={{ margin: "0 auto", textAlign: "center" }}>{t.pricing.h}</h2>
+              <p className="section-sub" style={{ margin: "16px auto 0", textAlign: "center" }}>{t.pricing.sub}</p>
+            </div>
+            <div className="pricing-grid aos aos-d1">
+              {t.pricing.plans.map((plan, i) => (
+                <div key={i} className={`pcard${plan.popular ? " featured" : ""}`}>
+                  {plan.popular && <div className="pop-badge">Le plus populaire</div>}
+                  <div className="plan-name">{plan.name}</div>
+                  <div className="plan-price">{plan.price} <sub>{plan.period}</sub></div>
+                  <div className="plan-tagline">{plan.tagline}</div>
+                  <hr className="plan-divider" />
+                  {plan.features.map((feat, j) => (
+                    <div key={j} className="plan-feat"><span className="ck">✓</span>{feat}</div>
+                  ))}
+                  <Link
+                    href={plan.btnStyle === "solid" ? "/login?tab=signup" : i === 0 ? "/login?tab=signup" : "/login"}
+                    className={`plan-btn ${plan.btnStyle === "solid" ? "pb-solid" : "pb-outline"}`}
+                  >
+                    {plan.btn}
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── TESTIMONIALS ── */}
+        <section className="testi-section" onClick={() => setLangOpen(false)}>
+          <div className="testi-inner">
+            <div className="aos">
+              <div className="section-tag">{t.testimonials.tag}</div>
+              <h2 className="section-h">{t.testimonials.h}</h2>
+            </div>
+            <div className="testi-grid aos aos-d1">
+              {t.testimonials.cards.map((card, i) => (
+                <div key={i} className="tcard">
+                  <div className="tquote">{card.quote}</div>
+                  <div className="tauthor">
+                    <div className="tavatar" style={{ background: card.color }}>{card.initials}</div>
+                    <div>
+                      <div className="tname">{card.name}</div>
+                      <div className="tmeta">{card.meta}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── CTA ── */}
+        <section className="cta-section" onClick={() => setLangOpen(false)}>
+          <div className="cta-inner">
+            <div className="cta-badge"><span className="badge-pulse" style={{ background: "#6699FF" }} />{t.cta.badge}</div>
+            <h2 className="cta-h">
+              {t.cta.h1}<br />
+              <span className="blue-hl">{t.cta.h2}</span>
+            </h2>
+            <p className="cta-sub">{t.cta.sub}</p>
+            <div className="cta-actions">
+              <Link href="/login?tab=signup" className="btn-cta-p">
+                {t.cta.btn}
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              </Link>
+              <a href="#how" className="btn-cta-g">{t.cta.demo}</a>
+            </div>
+          </div>
+        </section>
+
+        {/* ── FOOTER ── */}
+        <footer onClick={() => setLangOpen(false)}>
+          <div className="footer-logo">
+            <FlowdLogo fill="white" size={32} />
+            <span className="footer-logo-txt">Flowd</span>
+          </div>
+          <span className="footer-copy">{t.footer.copy}</span>
+          <div className="footer-links">
+            {t.footer.links.map((link) => (
+              <a key={link} href="#">{link}</a>
+            ))}
           </div>
         </footer>
+
       </div>
     </>
   );

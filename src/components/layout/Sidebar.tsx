@@ -8,24 +8,13 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 // ─── Flowd Logo ───────────────────────────────────────────────────────────────
 function FlowdLogo({ size = 34 }: { size?: number }) {
-  const r = Math.round(size * 0.27);
   return (
-    <div
-      style={{
-        width: size, height: size,
-        background: "#0052FF",
-        borderRadius: r,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        flexShrink: 0,
-        boxShadow: "0 2px 8px rgba(0,82,255,0.35)",
-      }}
-    >
-      <svg width={size * 0.55} height={size * 0.55} viewBox="0 0 22 22" fill="none">
-        <rect x="3" y="3" width="13" height="3.5" rx="1.2" fill="white" />
-        <rect x="3" y="3" width="3.5" height="16" rx="1.2" fill="white" />
-        <rect x="3" y="9.5" width="9" height="3.5" rx="1.2" fill="white" />
-      </svg>
-    </div>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/logos/flowd.svg"
+      alt="Flowd"
+      style={{ width: size, height: size, objectFit: "contain", flexShrink: 0, borderRadius: Math.round(size * 0.27) }}
+    />
   );
 }
 

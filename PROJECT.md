@@ -303,6 +303,10 @@ npm run dev
 
 ## Changelog
 
+### 2026-04-24 — Platform logo + live search bar
+- `Sidebar.tsx`: `FlowdLogo` now loads `/logos/flowd.svg` via `<img>` instead of inline SVG path
+- `Topbar.tsx`: fully functional live search — debounced (280ms), queries orders + conversations + delivery_parcels via Supabase ilike, shows results dropdown with type badges, click navigates to relevant page; loading spinner during query, empty state, outside-click close
+
 ### 2026-04-24 — Real logos + notification panel
 - Added `public/logos/` folder with 10 SVG logos: Instagram, Messenger, WhatsApp, Shopify, WooCommerce, Google Sheets, Yalidine, ZR Express, Maystro, Flowd
 - Integrations page: replaced emoji icons with real `<img>` logo files per integration card

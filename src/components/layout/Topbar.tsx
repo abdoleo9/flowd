@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
-import { getInitials } from "@/lib/utils";
+import { getInitials, formatDA } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useMobileNav } from "@/contexts/MobileNavContext";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 import type { Language } from "@/lib/i18n";
 
 interface TopbarProps {
@@ -55,6 +56,15 @@ function useDarkMode() {
   return { dark, toggle };
 }
 
+// ─── Search types ─────────────────────────────────────────────────────────────
+interface SearchResult {
+  id: string;
+  type: "order" | "conversation" | "parcel";
+  title: string;
+  subtitle: string;
+  href: string;
+}
+
 // ─── Topbar ───────────────────────────────────────────────────────────────────
 export function Topbar({ userName, userEmail }: TopbarProps) {
   const router = useRouter();
@@ -62,20 +72,95 @@ export function Topbar({ userName, userEmail }: TopbarProps) {
   const { t, lang, setLang } = useLanguage();
   const { toggle: toggleNav } = useMobileNav();
   const { dark, toggle: toggleDark } = useDarkMode();
+  const { activeWorkspace } = useWorkspace();
+
   const [userOpen, setUserOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+
   const userRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Close dropdowns on outside click
+  // Close all dropdowns on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (userRef.current && !userRef.current.contains(e.target as Node)) setUserOpen(false);
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) setSearchOpen(false);
     }
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
+
+  // Live search with debounce
+  const runSearch = useCallback(async (q: string) => {
+    if (!q.trim() || !activeWorkspace?.id) {
+      setSearchResults([]);
+      setSearchOpen(false);
+      return;
+    }
+    setSearchLoading(true);
+    setSearchOpen(true);
+    const supabase = getSupabaseBrowserClient();
+    const wid = activeWorkspace.id;
+
+    const [{ data: orders }, { data: convs }, { data: parcels }] = await Promise.all([
+      supabase.from("orders").select("id,customer_name,product_name,total_price,status")
+        .eq("workspace_id", wid)
+        .or(`customer_name.ilike.%${q}%,product_name.ilike.%${q}%`)
+        .limit(4),
+      supabase.from("conversations").select("id,customer_name,channel,status")
+        .eq("workspace_id", wid)
+        .ilike("customer_name", `%${q}%`)
+        .limit(3),
+      supabase.from("delivery_parcels").select("id,recipient_name,tracking_number,carrier")
+        .eq("workspace_id", wid)
+        .or(`recipient_name.ilike.%${q}%,tracking_number.ilike.%${q}%`)
+        .limit(3),
+    ]);
+
+    const results: SearchResult[] = [
+      ...(orders ?? []).map((o: { id: string; customer_name: string | null; product_name: string | null; total_price: number | null; status: string }) => ({
+        id: o.id, type: "order" as const,
+        title: o.customer_name ?? "—",
+        subtitle: `${o.product_name} · ${formatDA(o.total_price ?? 0)}`,
+        href: "/dashboard/orders",
+      })),
+      ...(convs ?? []).map((c: { id: string; customer_name: string | null; channel: string; status: string }) => ({
+        id: c.id, type: "conversation" as const,
+        title: c.customer_name ?? "—",
+        subtitle: `Chatbot · ${c.channel}`,
+        href: "/dashboard/chatbot",
+      })),
+      ...(parcels ?? []).map((p: { id: string; recipient_name: string | null; tracking_number: string | null; carrier: string | null }) => ({
+        id: p.id, type: "parcel" as const,
+        title: p.recipient_name ?? "—",
+        subtitle: `${p.tracking_number} · ${p.carrier}`,
+        href: "/dashboard/delivery",
+      })),
+    ];
+
+    setSearchResults(results);
+    setSearchLoading(false);
+  }, [activeWorkspace?.id]);
+
+  function handleSearchChange(value: string) {
+    setSearchQuery(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!value.trim()) { setSearchResults([]); setSearchOpen(false); return; }
+    debounceRef.current = setTimeout(() => runSearch(value), 280);
+  }
+
+  function handleResultClick(href: string) {
+    setSearchOpen(false);
+    setSearchQuery("");
+    router.push(href);
+  }
 
   async function handleSignOut() {
     const supabase = getSupabaseBrowserClient();
@@ -97,6 +182,12 @@ export function Topbar({ userName, userEmail }: TopbarProps) {
     color: "var(--text-3)",
     transition: "all 0.14s",
     flexShrink: 0,
+  };
+
+  const typeIcon: Record<string, string> = {
+    order: "🛍️",
+    conversation: "💬",
+    parcel: "📦",
   };
 
   return (
@@ -139,15 +230,24 @@ export function Topbar({ userName, userEmail }: TopbarProps) {
       </div>
 
       {/* Search — desktop */}
-      <div className="hidden md:block" style={{ flex: 1, maxWidth: 360, margin: "0 16px", position: "relative" }}>
-        <div style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-            <circle cx="7" cy="7" r="5" stroke="var(--text-4)" strokeWidth="1.5" />
-            <path d="m11 11 3 3" stroke="var(--text-4)" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
+      <div ref={searchRef} className="hidden md:block" style={{ flex: 1, maxWidth: 360, margin: "0 16px", position: "relative" }}>
+        <div style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", pointerEvents: "none", zIndex: 1 }}>
+          {searchLoading ? (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ animation: "spin 0.8s linear infinite" }}>
+              <circle cx="12" cy="12" r="10" stroke="var(--text-4)" strokeWidth="2" strokeDasharray="32" strokeDashoffset="8" />
+            </svg>
+          ) : (
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <circle cx="7" cy="7" r="5" stroke="var(--text-4)" strokeWidth="1.5" />
+              <path d="m11 11 3 3" stroke="var(--text-4)" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          )}
         </div>
         <input
-          placeholder="Rechercher…"
+          value={searchQuery}
+          onChange={(e) => handleSearchChange(e.target.value)}
+          onFocus={() => { if (searchResults.length) setSearchOpen(true); }}
+          placeholder="Rechercher commandes, clients, colis…"
           className="flowd-input"
           style={{
             width: "100%", height: 34,
@@ -161,6 +261,65 @@ export function Topbar({ userName, userEmail }: TopbarProps) {
             boxSizing: "border-box",
           }}
         />
+
+        {/* Search dropdown */}
+        {searchOpen && (
+          <div style={{
+            position: "absolute", top: 40, left: 0, right: 0, zIndex: 200,
+            background: "var(--bg-card)",
+            border: "1px solid var(--border)",
+            borderRadius: 12,
+            boxShadow: "0 8px 32px var(--shadow-lg)",
+            overflow: "hidden",
+          }}>
+            {searchResults.length === 0 && !searchLoading ? (
+              <div style={{ padding: "20px 16px", textAlign: "center" }}>
+                <p style={{ fontSize: 13, color: "var(--text-4)", margin: 0 }}>
+                  Aucun résultat pour &ldquo;{searchQuery}&rdquo;
+                </p>
+              </div>
+            ) : (
+              <div>
+                {searchResults.map((result) => (
+                  <button
+                    key={result.id}
+                    onClick={() => handleResultClick(result.href)}
+                    style={{
+                      width: "100%", textAlign: "left",
+                      display: "flex", alignItems: "center", gap: 10,
+                      padding: "10px 14px",
+                      background: "transparent", border: "none",
+                      cursor: "pointer",
+                      borderBottom: "1px solid var(--border-sub)",
+                      transition: "background 0.1s",
+                      fontFamily: "inherit",
+                    }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--bg-hover)"; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                  >
+                    <span style={{ fontSize: 16, flexShrink: 0 }}>{typeIcon[result.type]}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text-1)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {result.title}
+                      </p>
+                      <p style={{ fontSize: 11, color: "var(--text-4)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {result.subtitle}
+                      </p>
+                    </div>
+                    <span style={{ fontSize: 10, color: "var(--text-5)", background: "var(--bg-input)", padding: "2px 7px", borderRadius: 20, flexShrink: 0, textTransform: "capitalize" }}>
+                      {result.type === "order" ? "Commande" : result.type === "conversation" ? "Chat" : "Colis"}
+                    </span>
+                  </button>
+                ))}
+                <div style={{ padding: "8px 14px", borderTop: "1px solid var(--border)" }}>
+                  <p style={{ fontSize: 11, color: "var(--text-5)", margin: 0 }}>
+                    {searchResults.length} résultat{searchResults.length > 1 ? "s" : ""} — cliquez pour accéder
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Spacer — mobile */}
@@ -170,16 +329,7 @@ export function Topbar({ userName, userEmail }: TopbarProps) {
       <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
         {/* Language switcher */}
         <div style={{ position: "relative" }}>
-          <div
-            style={{
-              display: "flex",
-              background: "var(--bg-input)",
-              border: "1px solid var(--border)",
-              borderRadius: 8,
-              padding: 2,
-              gap: 1,
-            }}
-          >
+          <div style={{ display: "flex", background: "var(--bg-input)", border: "1px solid var(--border)", borderRadius: 8, padding: 2, gap: 1 }}>
             {(["FR", "EN", "AR"] as const).map((l) => {
               const code = l.toLowerCase() as Language;
               const active = lang === code;
@@ -190,16 +340,11 @@ export function Topbar({ userName, userEmail }: TopbarProps) {
                   style={{
                     background: active ? "#0052FF" : "transparent",
                     color: active ? "white" : "var(--text-3)",
-                    border: "none",
-                    borderRadius: 6,
-                    minWidth: 28,
-                    height: 24,
-                    fontSize: 10.5,
+                    border: "none", borderRadius: 6,
+                    minWidth: 28, height: 24, fontSize: 10.5,
                     fontWeight: active ? 700 : 500,
-                    padding: "0 7px",
-                    cursor: "pointer",
-                    transition: "all 0.14s",
-                    fontFamily: "inherit",
+                    padding: "0 7px", cursor: "pointer",
+                    transition: "all 0.14s", fontFamily: "inherit",
                   }}
                 >
                   {l}
@@ -248,20 +393,15 @@ export function Topbar({ userName, userEmail }: TopbarProps) {
           {notifOpen && (
             <div style={{
               position: "absolute", top: 44, right: 0, zIndex: 100,
-              background: "var(--bg-card)",
-              border: "1px solid var(--border)",
-              borderRadius: 14,
-              boxShadow: "0 8px 32px var(--shadow-lg)",
-              width: 320,
+              background: "var(--bg-card)", border: "1px solid var(--border)",
+              borderRadius: 14, boxShadow: "0 8px 32px var(--shadow-lg)", width: 320,
             }}>
-              {/* Header */}
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px 12px", borderBottom: "1px solid var(--border)" }}>
                 <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-1)" }}>{t.topbar.notifications}</span>
                 <button style={{ fontSize: 11, color: "#0052FF", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
                   Tout marquer lu
                 </button>
               </div>
-              {/* Empty state */}
               <div style={{ padding: "32px 16px", textAlign: "center" }}>
                 <div style={{ width: 44, height: 44, borderRadius: "50%", background: "var(--bg-input)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px" }}>
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -284,10 +424,8 @@ export function Topbar({ userName, userEmail }: TopbarProps) {
               width: 32, height: 32, borderRadius: "50%",
               background: "linear-gradient(135deg,#0052FF,#6B9FFF)",
               display: "flex", alignItems: "center", justifyContent: "center",
-              cursor: "pointer",
-              boxShadow: "0 2px 6px rgba(0,82,255,0.3)",
-              border: "none",
-              flexShrink: 0,
+              cursor: "pointer", boxShadow: "0 2px 6px rgba(0,82,255,0.3)",
+              border: "none", flexShrink: 0,
             }}
             title={displayName}
           >
@@ -297,12 +435,9 @@ export function Topbar({ userName, userEmail }: TopbarProps) {
           {userOpen && (
             <div style={{
               position: "absolute", top: 40, right: 0, zIndex: 100,
-              background: "var(--bg-card)",
-              border: "1px solid var(--border)",
-              borderRadius: 12,
-              boxShadow: "0 8px 32px var(--shadow-lg)",
-              minWidth: 180,
-              padding: "6px 0",
+              background: "var(--bg-card)", border: "1px solid var(--border)",
+              borderRadius: 12, boxShadow: "0 8px 32px var(--shadow-lg)",
+              minWidth: 180, padding: "6px 0",
             }}>
               <div style={{ padding: "8px 14px 10px", borderBottom: "1px solid var(--border)" }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-1)" }}>{displayName}</div>
@@ -311,14 +446,11 @@ export function Topbar({ userName, userEmail }: TopbarProps) {
               <button
                 onClick={handleSignOut}
                 style={{
-                  width: "100%", textAlign: "left",
-                  padding: "9px 14px",
-                  background: "transparent", border: "none",
-                  cursor: "pointer",
+                  width: "100%", textAlign: "left", padding: "9px 14px",
+                  background: "transparent", border: "none", cursor: "pointer",
                   fontSize: 13, color: "#EF4444",
                   display: "flex", alignItems: "center", gap: 8,
-                  fontFamily: "inherit",
-                  transition: "background 0.12s",
+                  fontFamily: "inherit", transition: "background 0.12s",
                 }}
                 onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--bg-hover)"; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
@@ -332,6 +464,8 @@ export function Topbar({ userName, userEmail }: TopbarProps) {
           )}
         </div>
       </div>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </header>
   );
 }

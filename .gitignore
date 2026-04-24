@@ -37,3 +37,7 @@ next-env.d.ts
 
 .vercel
 .env*.local
+
+# Claude Code internals
+.claude/
+.claire/

@@ -206,3 +206,38 @@ html, body {
 
 /* ─── Table scroll ──────────────────────────────────────────────────────────── */
 .table-scroll { overflow-x: auto; }
+
+/* ─── Light theme: make Tailwind "text-white" use the themed foreground ─────── */
+/* "text-white" is used throughout as the primary text colour in dark mode.
+   In light mode we remap it so white-on-white text doesn't disappear.
+   Exceptions (.btn, badges, coloured chips) override this via their own color rule. */
+[data-theme="light"] .text-white {
+  color: var(--text-1);
+}
+/* Keep white text on primary-blue buttons */
+[data-theme="light"] .btn:not(.btn-ghost):not(.btn-icon) {
+  color: #ffffff;
+}
+
+/* ─── Light theme: fix hardcoded dark inline-style backgrounds ──────────────── */
+/* Some components still use Tailwind bg-* that now resolve to CSS vars — these
+   overrides catch any remaining inline-style stragglers for the most common values. */
+[data-theme="light"] .bg-\[\#161820\],
+[data-theme="light"] .bg-\[\#111318\],
+[data-theme="light"] .bg-\[\#0d0f14\],
+[data-theme="light"] .bg-\[\#1c1f2a\] {
+  background-color: var(--bg-card);
+}
+
+/* Input & search backgrounds in light mode */
+[data-theme="light"] input,
+[data-theme="light"] select,
+[data-theme="light"] textarea {
+  color: var(--text-1);
+  background-color: var(--bg-input);
+  border-color: var(--border);
+}
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder {
+  color: var(--text-4);
+}

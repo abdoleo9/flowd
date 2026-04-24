@@ -303,6 +303,10 @@ npm run dev
 
 ## Changelog
 
+### 2026-04-24 — Fix light/dark theme switcher (all elements now respond)
+- `tailwind.config.ts`: replaced all hardcoded dark hex values with CSS variable references (`var(--bg-card)`, `var(--border)`, `var(--text-4)`, etc.) so every Tailwind class flips when `[data-theme="light"]` is applied
+- `globals.css`: added `[data-theme="light"] .text-white { color: var(--text-1) }` override so primary text becomes dark in light mode; added input/select color fixes for light theme
+
 ### 2026-04-24 — Platform logo + live search bar
 - `Sidebar.tsx`: `FlowdLogo` now loads `/logos/flowd.svg` via `<img>` instead of inline SVG path
 - `Topbar.tsx`: fully functional live search — debounced (280ms), queries orders + conversations + delivery_parcels via Supabase ilike, shows results dropdown with type badges, click navigates to relevant page; loading spinner during query, empty state, outside-click close

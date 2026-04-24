@@ -303,6 +303,16 @@ npm run dev
 
 ## Changelog
 
+### 2026-04-24 — Full UI redesign: Flowd visual identity
+- Added CSS custom properties to `globals.css`: light (`[data-theme="light"]`) and dark (`:root`) themes with full variable set (`--bg-sidebar`, `--bg-card`, `--text-1`…`--text-5`, `--border`, `--shadow`, `--chart-line`, etc.)
+- Added utility CSS classes: `.btn`, `.btn-ghost`, `.btn-icon`, `.btn-xs`→`.btn-lg`, `.btn-sq-sm/md`, `.page-pad`, `.fade-in`, `.metric-grid`, `.dash-layout`, `.chart-row`, `.integ-grid`, `.settings-layout`, `.settings-nav`, `.flowd-input`
+- Updated `src/app/layout.tsx`: theme init script in `<head>` prevents flash on reload; Toaster uses CSS variables
+- Rewrote `Sidebar.tsx`: new `FlowdLogo` SVG component (blue rounded square), 8 custom SVG `NavIcon` icons, all inline styles with CSS variables, workspace name pill
+- Rewrote `Topbar.tsx`: `useDarkMode()` hook with localStorage persistence, breadcrumb with page label, search input (desktop), 3-language switcher (FR/EN/AR inline pills), dark/light toggle (sun/moon SVG), notification bell with red dot, user avatar dropdown with sign-out
+- Updated `src/app/(dashboard)/layout.tsx`: wrapper uses CSS variable inline styles
+- Rewrote `DashboardShell.tsx`: new `MetricCard` (icon + trend badge), `BarChart` SVG (monthly bars, last 3 highlighted in #0052FF), `LineChart` SVG (gradient fill area), uses `.metric-grid`, `.chart-row`, `.fade-in` classes
+- Build: `npm run build` passes with 0 errors, 30 routes generated
+
 ### 2026-04-10 — Initial scaffold complete
 - Built all 8 dashboard pages: `/login`, `/dashboard`, `/orders`, `/chatbot`, `/integrations`, `/delivery`, `/team`, `/settings`
 - Set up Supabase auth, DB schema, Realtime hooks

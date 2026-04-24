@@ -303,6 +303,13 @@ npm run dev
 
 ## Changelog
 
+### 2026-04-24 — Meta OAuth one-click integration
+- Added `src/app/api/integrations/meta/connect/route.ts` — initiates OAuth popup flow for Instagram, Messenger, WhatsApp
+- Added `src/app/api/integrations/meta/callback/route.ts` — exchanges code for long-lived token, subscribes page to webhooks, upserts to `integrations` table
+- Added `src/hooks/useMetaConnect.ts` — React hook managing popup lifecycle, postMessage handling, and connect/disconnect status
+- Added `src/app/api/integrations/meta/webhook/route.ts` — Meta webhook verification endpoint
+- Requires new env vars: `META_APP_ID`, `META_APP_SECRET`, `META_WEBHOOK_VERIFY_TOKEN`, `NEXT_PUBLIC_APP_URL`
+
 ### 2026-04-10 — Initial scaffold complete
 - Built all 8 dashboard pages: `/login`, `/dashboard`, `/orders`, `/chatbot`, `/integrations`, `/delivery`, `/team`, `/settings`
 - Set up Supabase auth, DB schema, Realtime hooks

@@ -303,6 +303,14 @@ npm run dev
 
 ## Changelog
 
+### 2026-04-24 — Real logos + notification panel
+- Added `public/logos/` folder with 10 SVG logos: Instagram, Messenger, WhatsApp, Shopify, WooCommerce, Google Sheets, Yalidine, ZR Express, Maystro, Flowd
+- Integrations page: replaced emoji icons with real `<img>` logo files per integration card
+- Delivery page table: carrier column now shows carrier logo alongside name
+- DeliveryPanel (dashboard): carrier logo shown in parcel row icon slot
+- Chatbot header + dashboard ChatbotFeed: Instagram/Messenger logo inline with channel name
+- Topbar: notification bell now opens a dropdown panel (empty state with icon + "Aucune notification"), closes on outside click
+
 ### 2026-04-24 — Security fixes: workspace isolation hardening
 - `api/landing-pages/route.ts` GET: now validates requested workspace_id against active workspace cookie (prevents cross-workspace data access)
 - `api/delivery/sync/route.ts`: added `workspace_id` filter to `delivery_parcels` update and `integrations` update queries (defense in depth on top of workspace-scoped fetch)

@@ -63,12 +63,15 @@ export function Topbar({ userName, userEmail }: TopbarProps) {
   const { toggle: toggleNav } = useMobileNav();
   const { dark, toggle: toggleDark } = useDarkMode();
   const [userOpen, setUserOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const userRef = useRef<HTMLDivElement>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
 
   // Close dropdowns on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (userRef.current && !userRef.current.contains(e.target as Node)) setUserOpen(false);
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
     }
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
@@ -227,19 +230,50 @@ export function Topbar({ userName, userEmail }: TopbarProps) {
         </button>
 
         {/* Notification bell */}
-        <div style={{ position: "relative" }}>
+        <div ref={notifRef} style={{ position: "relative" }}>
           <button
-            style={{ ...btnStyle }}
+            onClick={() => setNotifOpen((o) => !o)}
+            style={{ ...btnStyle, background: notifOpen ? "var(--bg-hover)" : "transparent", color: notifOpen ? "var(--text-1)" : "var(--text-3)" }}
             title={t.topbar.notifications}
             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--bg-hover)"; (e.currentTarget as HTMLElement).style.color = "var(--text-1)"; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = "var(--text-3)"; }}
+            onMouseLeave={(e) => { if (!notifOpen) { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = "var(--text-3)"; } }}
           >
             <svg width="17" height="17" viewBox="0 0 20 20" fill="none">
               <path d="M10 2a6 6 0 0 0-6 6v3l-2 2v1h16v-1l-2-2V8a6 6 0 0 0-6-6z" stroke="currentColor" strokeWidth="1.6" />
               <path d="M8 17a2 2 0 0 0 4 0" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
             </svg>
           </button>
-          <div style={{ position: "absolute", top: 7, right: 7, width: 7, height: 7, background: "#EF4444", borderRadius: "50%", border: "2px solid var(--bg-topbar)" }} />
+          <div style={{ position: "absolute", top: 7, right: 7, width: 7, height: 7, background: "#EF4444", borderRadius: "50%", border: "2px solid var(--bg-topbar)", pointerEvents: "none" }} />
+
+          {notifOpen && (
+            <div style={{
+              position: "absolute", top: 44, right: 0, zIndex: 100,
+              background: "var(--bg-card)",
+              border: "1px solid var(--border)",
+              borderRadius: 14,
+              boxShadow: "0 8px 32px var(--shadow-lg)",
+              width: 320,
+            }}>
+              {/* Header */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px 12px", borderBottom: "1px solid var(--border)" }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-1)" }}>{t.topbar.notifications}</span>
+                <button style={{ fontSize: 11, color: "#0052FF", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
+                  Tout marquer lu
+                </button>
+              </div>
+              {/* Empty state */}
+              <div style={{ padding: "32px 16px", textAlign: "center" }}>
+                <div style={{ width: 44, height: 44, borderRadius: "50%", background: "var(--bg-input)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px" }}>
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M10 2a6 6 0 0 0-6 6v3l-2 2v1h16v-1l-2-2V8a6 6 0 0 0-6-6z" stroke="var(--text-4)" strokeWidth="1.6" />
+                    <path d="M8 17a2 2 0 0 0 4 0" stroke="var(--text-4)" strokeWidth="1.6" strokeLinecap="round" />
+                  </svg>
+                </div>
+                <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text-2)", margin: 0 }}>Aucune notification</p>
+                <p style={{ fontSize: 12, color: "var(--text-4)", marginTop: 4 }}>Vous êtes à jour ✓</p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* User avatar + dropdown */}

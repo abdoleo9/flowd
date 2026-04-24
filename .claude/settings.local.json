@@ -33,7 +33,9 @@
       "Bash(vercel env *)",
       "mcp__e2a17dc6-b6d7-4a51-8371-7de71872b675__get_deployment_build_logs",
       "Bash(git -C \"/c/Users/Dell/Desktop/flowd 0.2\" log --oneline -3)",
-      "Bash(git -C \"/c/Users/Dell/Desktop/flowd 0.2\" show HEAD:src/app/api/landing-pages/analyze-image/route.ts)"
+      "Bash(git -C \"/c/Users/Dell/Desktop/flowd 0.2\" show HEAD:src/app/api/landing-pages/analyze-image/route.ts)",
+      "Bash(vercel whoami *)",
+      "Bash(vercel --prod --yes)"
     ]
   }
 }

@@ -303,6 +303,14 @@ npm run dev
 
 ## Changelog
 
+### 2026-04-24 — Wire Meta connect buttons into integrations page
+- Updated `src/app/(dashboard)/dashboard/integrations/page.tsx`:
+  - Imported `useMetaConnect` hook
+  - Added three hook calls (instagram, messenger, whatsapp) initialized from live Supabase data
+  - Instagram/Messenger/WhatsApp cards now show "Connecter via Meta" OAuth button (idle/error), "Connexion…" spinner (connecting), Configure+Delete (connected)
+  - "Manuel" fallback link preserved to open existing wizard/modal
+  - Badge updates immediately from hook state; DB refresh triggered on OAuth success
+
 ### 2026-04-24 — Meta OAuth one-click integration
 - Added `src/app/api/integrations/meta/connect/route.ts` — initiates OAuth popup flow for Instagram, Messenger, WhatsApp
 - Added `src/app/api/integrations/meta/callback/route.ts` — exchanges code for long-lived token, subscribes page to webhooks, upserts to `integrations` table

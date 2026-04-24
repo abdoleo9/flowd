@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/Input";
 import { toast } from "sonner";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useMetaConnect } from "@/hooks/useMetaConnect";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface IntegrationDef {
@@ -1003,6 +1004,11 @@ export default function IntegrationsPage() {
   const supabase = getSupabaseBrowserClient();
   const { activeWorkspace } = useWorkspace();
 
+  const instagramMeta = useMetaConnect('instagram', !!integrations.find((i) => i.type === 'instagram')?.is_active)
+  const messengerMeta = useMetaConnect('messenger', !!integrations.find((i) => i.type === 'messenger')?.is_active)
+  const whatsappMeta  = useMetaConnect('whatsapp',  !!integrations.find((i) => i.type === 'whatsapp')?.is_active)
+  const metaHooks = { instagram: instagramMeta, messenger: messengerMeta, whatsapp: whatsappMeta }
+
   const categoryLabels: Record<string, string> = {
     "Messagerie": t.integrations.catMessaging,
     "Boutique en ligne": t.integrations.catStore,
@@ -1022,6 +1028,19 @@ export default function IntegrationsPage() {
   }, [supabase, activeWorkspace]);
 
   useEffect(() => { fetchIntegrations(); }, [fetchIntegrations]);
+
+  // Re-sync DB state after a successful Meta OAuth popup
+  useEffect(() => {
+    if (
+      instagramMeta.status === 'connected' ||
+      messengerMeta.status === 'connected' ||
+      whatsappMeta.status === 'connected'
+    ) {
+      fetchIntegrations();
+    }
+  // fetchIntegrations is stable via useCallback; omitting avoids infinite loop
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [instagramMeta.status, messengerMeta.status, whatsappMeta.status]);
 
   function getIntegration(type: IntegrationType) {
     return integrations.find((i) => i.type === type);
@@ -1091,6 +1110,10 @@ export default function IntegrationsPage() {
               {defs.map((def) => {
                 const connected = getIntegration(def.type);
                 const isActive = connected?.is_active;
+                const metaHook = (['instagram', 'messenger', 'whatsapp'] as const).includes(def.type as 'instagram' | 'messenger' | 'whatsapp')
+                  ? metaHooks[def.type as 'instagram' | 'messenger' | 'whatsapp']
+                  : null;
+                const metaConnected = isActive || metaHook?.status === 'connected';
                 return (
                   <div key={def.type} className="bg-card border border-border rounded-xl p-5 flex flex-col gap-4">
                     <div className="flex items-start justify-between">
@@ -1111,7 +1134,7 @@ export default function IntegrationsPage() {
                               <span className="text-[9px] font-bold text-[#25D366] bg-[#25D366]/10 px-1.5 py-0.5 rounded-full uppercase tracking-wide">Meta</span>
                             )}
                           </div>
-                          {isActive ? (
+                          {metaConnected || isActive ? (
                             <Badge variant="success" dot>{t.status.connected}</Badge>
                           ) : connected ? (
                             <Badge variant="warning" dot>{t.status.inactive}</Badge>
@@ -1133,19 +1156,57 @@ export default function IntegrationsPage() {
                     )}
 
                     <div className="flex items-center gap-2 mt-auto">
-                      <Button
-                        size="sm"
-                        variant={isActive ? "secondary" : "primary"}
-                        icon={isActive ? <Settings size={13} /> : <Plus size={13} />}
-                        className="flex-1"
-                        onClick={() => setOpenDef(def)}
-                      >
-                        {isActive ? t.actions.configure : t.actions.connect}
-                      </Button>
-                      {isActive && (
-                        <Button size="icon" variant="danger" onClick={() => handleDisconnect(def.type)}>
-                          <Trash2 size={13} />
-                        </Button>
+                      {metaHook ? (
+                        metaConnected ? (
+                          <>
+                            <Button size="sm" variant="secondary" icon={<Settings size={13} />} className="flex-1" onClick={() => setOpenDef(def)}>
+                              {t.actions.configure}
+                            </Button>
+                            <Button size="icon" variant="danger" onClick={() => handleDisconnect(def.type)}>
+                              <Trash2 size={13} />
+                            </Button>
+                          </>
+                        ) : metaHook.status === 'connecting' ? (
+                          <Button size="sm" variant="primary" className="flex-1" disabled>
+                            <Loader2 size={13} className="animate-spin mr-1.5" /> Connexion…
+                          </Button>
+                        ) : (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="primary"
+                              icon={<Plus size={13} />}
+                              className="flex-1"
+                              onClick={metaHook.connect}
+                            >
+                              {metaHook.status === 'error' ? 'Réessayer' : 'Connecter via Meta'}
+                            </Button>
+                            <button
+                              onClick={() => setOpenDef(def)}
+                              className="text-xs text-muted-foreground hover:text-white transition-colors flex-shrink-0 px-1"
+                              title="Configuration manuelle"
+                            >
+                              Manuel
+                            </button>
+                          </>
+                        )
+                      ) : (
+                        <>
+                          <Button
+                            size="sm"
+                            variant={isActive ? "secondary" : "primary"}
+                            icon={isActive ? <Settings size={13} /> : <Plus size={13} />}
+                            className="flex-1"
+                            onClick={() => setOpenDef(def)}
+                          >
+                            {isActive ? t.actions.configure : t.actions.connect}
+                          </Button>
+                          {isActive && (
+                            <Button size="icon" variant="danger" onClick={() => handleDisconnect(def.type)}>
+                              <Trash2 size={13} />
+                            </Button>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>

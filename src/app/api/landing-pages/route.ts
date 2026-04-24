@@ -7,14 +7,19 @@ export async function GET(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  // Validate workspace membership via active workspace cookie
+  const workspaceId = await getActiveWorkspaceId();
+  if (!workspaceId) return NextResponse.json({ error: 'No active workspace' }, { status: 403 });
+
+  // Also accept workspace_id param but verify it matches the active one
   const { searchParams } = new URL(req.url);
-  const workspace_id = searchParams.get('workspace_id');
-  if (!workspace_id) return NextResponse.json({ error: 'workspace_id required' }, { status: 400 });
+  const requestedId = searchParams.get('workspace_id') ?? workspaceId;
+  if (requestedId !== workspaceId) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const { data, error } = await supabase
     .from('landing_pages')
     .select('*')
-    .eq('workspace_id', workspace_id)
+    .eq('workspace_id', workspaceId)
     .order('created_at', { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

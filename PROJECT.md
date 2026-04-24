@@ -303,6 +303,10 @@ npm run dev
 
 ## Changelog
 
+### 2026-04-24 — Security fixes: workspace isolation hardening
+- `api/landing-pages/route.ts` GET: now validates requested workspace_id against active workspace cookie (prevents cross-workspace data access)
+- `api/delivery/sync/route.ts`: added `workspace_id` filter to `delivery_parcels` update and `integrations` update queries (defense in depth on top of workspace-scoped fetch)
+
 ### 2026-04-24 — Full UI redesign: Flowd visual identity
 - Added CSS custom properties to `globals.css`: light (`[data-theme="light"]`) and dark (`:root`) themes with full variable set (`--bg-sidebar`, `--bg-card`, `--text-1`…`--text-5`, `--border`, `--shadow`, `--chart-line`, etc.)
 - Added utility CSS classes: `.btn`, `.btn-ghost`, `.btn-icon`, `.btn-xs`→`.btn-lg`, `.btn-sq-sm/md`, `.page-pad`, `.fade-in`, `.metric-grid`, `.dash-layout`, `.chart-row`, `.integ-grid`, `.settings-layout`, `.settings-nav`, `.flowd-input`

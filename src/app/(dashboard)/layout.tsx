@@ -57,14 +57,14 @@ export default async function DashboardLayout({
           initialWorkspaces={workspaces}
           initialActiveId={activeWorkspaceId}
         >
-          <div className="flex h-screen bg-background overflow-hidden">
+          <div style={{ display: "flex", height: "100vh", background: "var(--bg-page)", overflow: "hidden" }}>
             <Sidebar />
-            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden" }}>
               <Topbar
                 userName={profile?.full_name ?? undefined}
                 userEmail={user.email}
               />
-              <main className="flex-1 overflow-y-auto p-3 md:p-6">{children}</main>
+              <main style={{ flex: 1, overflowY: "auto", padding: "20px 18px" }} className="md:p-7">{children}</main>
             </div>
           </div>
         </WorkspaceProvider>

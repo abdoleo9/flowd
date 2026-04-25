@@ -337,6 +337,36 @@ npm run dev
 - Added `src/app/api/integrations/meta/webhook/route.ts` — Meta webhook verification endpoint
 - Requires new env vars: `META_APP_ID`, `META_APP_SECRET`, `META_WEBHOOK_VERIFY_TOKEN`, `NEXT_PUBLIC_APP_URL`
 
+### 2026-04-24 — Fix light/dark theme switcher (all elements now respond)
+- `tailwind.config.ts`: replaced all hardcoded dark hex values with CSS variable references (`var(--bg-card)`, `var(--border)`, `var(--text-4)`, etc.) so every Tailwind class flips when `[data-theme="light"]` is applied
+- `globals.css`: added `[data-theme="light"] .text-white { color: var(--text-1) }` override so primary text becomes dark in light mode; added input/select color fixes for light theme
+
+### 2026-04-24 — Platform logo + live search bar
+- `Sidebar.tsx`: `FlowdLogo` now loads `/logos/flowd.svg` via `<img>` instead of inline SVG path
+- `Topbar.tsx`: fully functional live search — debounced (280ms), queries orders + conversations + delivery_parcels via Supabase ilike, shows results dropdown with type badges, click navigates to relevant page; loading spinner during query, empty state, outside-click close
+
+### 2026-04-24 — Real logos + notification panel
+- Added `public/logos/` folder with 10 SVG logos: Instagram, Messenger, WhatsApp, Shopify, WooCommerce, Google Sheets, Yalidine, ZR Express, Maystro, Flowd
+- Integrations page: replaced emoji icons with real `<img>` logo files per integration card
+- Delivery page table: carrier column now shows carrier logo alongside name
+- DeliveryPanel (dashboard): carrier logo shown in parcel row icon slot
+- Chatbot header + dashboard ChatbotFeed: Instagram/Messenger logo inline with channel name
+- Topbar: notification bell now opens a dropdown panel (empty state with icon + "Aucune notification"), closes on outside click
+
+### 2026-04-24 — Security fixes: workspace isolation hardening
+- `api/landing-pages/route.ts` GET: now validates requested workspace_id against active workspace cookie (prevents cross-workspace data access)
+- `api/delivery/sync/route.ts`: added `workspace_id` filter to `delivery_parcels` update and `integrations` update queries (defense in depth on top of workspace-scoped fetch)
+
+### 2026-04-24 — Full UI redesign: Flowd visual identity
+- Added CSS custom properties to `globals.css`: light (`[data-theme="light"]`) and dark (`:root`) themes with full variable set (`--bg-sidebar`, `--bg-card`, `--text-1`…`--text-5`, `--border`, `--shadow`, `--chart-line`, etc.)
+- Added utility CSS classes: `.btn`, `.btn-ghost`, `.btn-icon`, `.btn-xs`→`.btn-lg`, `.btn-sq-sm/md`, `.page-pad`, `.fade-in`, `.metric-grid`, `.dash-layout`, `.chart-row`, `.integ-grid`, `.settings-layout`, `.settings-nav`, `.flowd-input`
+- Updated `src/app/layout.tsx`: theme init script in `<head>` prevents flash on reload; Toaster uses CSS variables
+- Rewrote `Sidebar.tsx`: new `FlowdLogo` SVG component (blue rounded square), 8 custom SVG `NavIcon` icons, all inline styles with CSS variables, workspace name pill
+- Rewrote `Topbar.tsx`: `useDarkMode()` hook with localStorage persistence, breadcrumb with page label, search input (desktop), 3-language switcher (FR/EN/AR inline pills), dark/light toggle (sun/moon SVG), notification bell with red dot, user avatar dropdown with sign-out
+- Updated `src/app/(dashboard)/layout.tsx`: wrapper uses CSS variable inline styles
+- Rewrote `DashboardShell.tsx`: new `MetricCard` (icon + trend badge), `BarChart` SVG (monthly bars, last 3 highlighted in #0052FF), `LineChart` SVG (gradient fill area), uses `.metric-grid`, `.chart-row`, `.fade-in` classes
+- Build: `npm run build` passes with 0 errors, 30 routes generated
+
 ### 2026-04-10 — Initial scaffold complete
 - Built all 8 dashboard pages: `/login`, `/dashboard`, `/orders`, `/chatbot`, `/integrations`, `/delivery`, `/team`, `/settings`
 - Set up Supabase auth, DB schema, Realtime hooks

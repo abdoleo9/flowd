@@ -46,8 +46,19 @@ export function DeliveryPanel({ parcels }: DeliveryPanelProps) {
             const config = statusConfig[parcel.status] ?? { label: parcel.status, variant: "muted" as const };
             return (
               <div key={parcel.id} className="flex items-center gap-3 px-5 py-3.5">
-                <div className="w-8 h-8 rounded-lg bg-orange-muted flex items-center justify-center flex-shrink-0">
-                  <Package size={14} className="text-orange" />
+                <div className="w-8 h-8 rounded-lg bg-orange-muted flex items-center justify-center flex-shrink-0" style={{ padding: 5 }}>
+                  {parcel.carrier === "yalidine" ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src="/logos/yalidine.svg" alt="Yalidine" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                  ) : parcel.carrier === "zr_express" ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src="/logos/zr-express.svg" alt="ZR Express" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                  ) : parcel.carrier === "maystro" ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src="/logos/maystro.svg" alt="Maystro" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                  ) : (
+                    <Package size={14} className="text-orange" />
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-white truncate">{parcel.recipient_name}</p>

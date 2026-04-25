@@ -19,7 +19,7 @@ interface IntegrationDef {
   name: string;
   description: string;
   category: string;
-  icon: string;
+  logo: string;
   color: string;
   isMeta: boolean;
   fields: { key: string; label: string; placeholder: string; type?: string; hint?: string }[];
@@ -32,7 +32,7 @@ const INTEGRATIONS: IntegrationDef[] = [
     name: "Instagram",
     description: "Recevez les DMs Instagram directement dans Flowd et répondez via le chatbot IA.",
     category: "Messagerie",
-    icon: "📸",
+    logo: "/logos/instagram.svg",
     color: "#E1306C",
     isMeta: true,
     fields: [],
@@ -42,7 +42,7 @@ const INTEGRATIONS: IntegrationDef[] = [
     name: "Messenger",
     description: "Connectez votre page Facebook pour gérer les messages Messenger via le chatbot.",
     category: "Messagerie",
-    icon: "💙",
+    logo: "/logos/messenger.svg",
     color: "#0084FF",
     isMeta: true,
     fields: [],
@@ -52,7 +52,7 @@ const INTEGRATIONS: IntegrationDef[] = [
     name: "WhatsApp Business",
     description: "Confirmez les commandes clients via WhatsApp. Le chatbot IA gère les conversations automatiquement.",
     category: "Messagerie",
-    icon: "💬",
+    logo: "/logos/whatsapp.svg",
     color: "#25D366",
     isMeta: true,
     fields: [
@@ -65,7 +65,7 @@ const INTEGRATIONS: IntegrationDef[] = [
     name: "Shopify",
     description: "Synchronisez automatiquement vos commandes Shopify dans Flowd en temps réel.",
     category: "Boutique en ligne",
-    icon: "🛍️",
+    logo: "/logos/shopify.svg",
     color: "#96BF48",
     isMeta: false,
     fields: [
@@ -78,7 +78,7 @@ const INTEGRATIONS: IntegrationDef[] = [
     name: "WooCommerce",
     description: "Importez vos commandes WooCommerce et gérez-les dans Flowd.",
     category: "Boutique en ligne",
-    icon: "🟣",
+    logo: "/logos/woocommerce.svg",
     color: "#96588A",
     isMeta: false,
     fields: [
@@ -92,7 +92,7 @@ const INTEGRATIONS: IntegrationDef[] = [
     name: "Google Sheets",
     description: "Synchronisez votre catalogue produits depuis un Google Sheet.",
     category: "Catalogue produits",
-    icon: "📊",
+    logo: "/logos/google-sheets.svg",
     color: "#34A853",
     isMeta: false,
     fields: [
@@ -105,7 +105,7 @@ const INTEGRATIONS: IntegrationDef[] = [
     name: "Yalidine",
     description: "Créez et suivez vos colis Yalidine Express directement depuis Flowd.",
     category: "Livraison",
-    icon: "🚚",
+    logo: "/logos/yalidine.svg",
     color: "#FF6B35",
     isMeta: false,
     fields: [
@@ -118,7 +118,7 @@ const INTEGRATIONS: IntegrationDef[] = [
     name: "ZR Express",
     description: "Intégration avec ZR Express pour la livraison à travers l'Algérie.",
     category: "Livraison",
-    icon: "📦",
+    logo: "/logos/zr-express.svg",
     color: "#E63946",
     isMeta: false,
     fields: [
@@ -131,7 +131,7 @@ const INTEGRATIONS: IntegrationDef[] = [
     name: "Maystro",
     description: "Connectez Maystro Delivery pour automatiser vos expéditions.",
     category: "Livraison",
-    icon: "🏎️",
+    logo: "/logos/maystro.svg",
     color: "#4CC9F0",
     isMeta: false,
     fields: [
@@ -432,10 +432,11 @@ export default function IntegrationsPage() {
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
                         <div
-                          className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
-                          style={{ backgroundColor: def.color + "20", border: `1px solid ${def.color}30` }}
+                          className="w-10 h-10 rounded-xl flex items-center justify-center"
+                          style={{ backgroundColor: def.color + "15", border: `1px solid ${def.color}25`, padding: 6 }}
                         >
-                          {def.icon}
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={def.logo} alt={def.name} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
                         </div>
                         <div>
                           <div className="flex items-center gap-2">

@@ -186,7 +186,23 @@ export default function DeliveryPage() {
                       <td className="hidden lg:table-cell py-3 px-4 text-sm text-muted-foreground">
                         {parcel.order_id ? parcel.order_id.slice(0, 8) + "…" : "—"}
                       </td>
-                      <td className="hidden md:table-cell py-3 px-4 text-sm text-white capitalize">{parcel.carrier}</td>
+                      <td className="hidden md:table-cell py-3 px-4">
+                        <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          {parcel.carrier === "yalidine" && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src="/logos/yalidine.svg" alt="" style={{ width: 16, height: 16, objectFit: "contain", flexShrink: 0 }} />
+                          )}
+                          {parcel.carrier === "zr_express" && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src="/logos/zr-express.svg" alt="" style={{ width: 16, height: 16, objectFit: "contain", flexShrink: 0 }} />
+                          )}
+                          {parcel.carrier === "maystro" && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src="/logos/maystro.svg" alt="" style={{ width: 16, height: 16, objectFit: "contain", flexShrink: 0 }} />
+                          )}
+                          <span className="text-sm text-white capitalize">{parcel.carrier}</span>
+                        </span>
+                      </td>
                       <td className="hidden sm:table-cell py-3 px-4 text-sm font-medium text-white">
                         {parcel.cod_amount ? formatDA(parcel.cod_amount) : "—"}
                       </td>

@@ -61,7 +61,8 @@ export async function POST() {
             status_history: newHistory,
             updated_at: new Date().toISOString(),
           })
-          .eq("id", parcel.id);
+          .eq("id", parcel.id)
+          .eq("workspace_id", workspaceId);
 
         updated++;
       } catch {
@@ -72,7 +73,8 @@ export async function POST() {
     await supabase
       .from("integrations")
       .update({ last_synced_at: new Date().toISOString() })
-      .eq("id", integration.id);
+      .eq("id", integration.id)
+      .eq("workspace_id", workspaceId);
   }
 
   return NextResponse.json({ message: "Sync complete", updated });

@@ -50,7 +50,15 @@ export function ChatbotFeed({ conversations }: ChatbotFeedProps) {
                   <p className="text-sm font-medium text-white truncate">
                     {conv.customer_name ?? "Client inconnu"}
                   </p>
-                  <p className="text-xs text-muted">
+                  <p className="text-xs text-muted" style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    {conv.channel === "instagram" && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src="/logos/instagram.svg" alt="Instagram" style={{ width: 11, height: 11, objectFit: "contain", flexShrink: 0 }} />
+                    )}
+                    {conv.channel === "messenger" && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src="/logos/messenger.svg" alt="Messenger" style={{ width: 11, height: 11, objectFit: "contain", flexShrink: 0 }} />
+                    )}
                     {conv.channel} · {formatRelativeTime(conv.updated_at)}
                   </p>
                 </div>

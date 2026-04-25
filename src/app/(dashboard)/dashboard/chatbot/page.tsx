@@ -243,7 +243,15 @@ export default function ChatbotPage() {
               </button>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-white truncate">{activeConv.customer_name ?? "Client"}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground" style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  {activeConv.channel === "instagram" && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src="/logos/instagram.svg" alt="" style={{ width: 11, height: 11, objectFit: "contain", flexShrink: 0 }} />
+                  )}
+                  {activeConv.channel === "messenger" && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src="/logos/messenger.svg" alt="" style={{ width: 11, height: 11, objectFit: "contain", flexShrink: 0 }} />
+                  )}
                   {activeConv.channel} · {activeConv.language_detected}
                   {activeConv.wilaya_code ? ` · ${getWilayaName(activeConv.wilaya_code)}` : ""}
                 </p>

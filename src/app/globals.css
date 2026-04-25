@@ -2,52 +2,242 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
 
-* {
-  box-sizing: border-box;
+/* ─── CSS Custom Properties ────────────────────────────────────────────────── */
+:root {
+  /* Dark theme (default) */
+  --bg-sidebar:   #111318;
+  --bg-topbar:    #111318;
+  --bg-card:      #161820;
+  --bg-page:      #0d0f14;
+  --bg-input:     #1c1f2a;
+  --bg-subtle:    #1c1f2a;
+  --bg-hover:     #1e2230;
+  --text-1:       #f1f5f9;
+  --text-2:       #e2e8f0;
+  --text-3:       #94a3b8;
+  --text-4:       #64748b;
+  --text-5:       #475569;
+  --border:       #1e2028;
+  --border-sub:   #191b24;
+  --shadow:       rgba(0, 0, 0, 0.30);
+  --shadow-md:    rgba(0, 0, 0, 0.40);
+  --shadow-lg:    rgba(0, 0, 0, 0.55);
+  --primary-sub:  rgba(0, 82, 255, 0.12);
+  --chart-line:   #1e2028;
 }
 
-html,
-body {
-  background-color: #0d0f14;
-  color: #f1f5f9;
+[data-theme="light"] {
+  --bg-sidebar:   #ffffff;
+  --bg-topbar:    #ffffff;
+  --bg-card:      #ffffff;
+  --bg-page:      #f8f9fb;
+  --bg-input:     #f3f4f6;
+  --bg-subtle:    #f8f9fb;
+  --bg-hover:     #f1f5f9;
+  --text-1:       #0f172a;
+  --text-2:       #1e293b;
+  --text-3:       #475569;
+  --text-4:       #64748b;
+  --text-5:       #94a3b8;
+  --border:       #e2e8f0;
+  --border-sub:   #f1f5f9;
+  --shadow:       rgba(0, 0, 0, 0.06);
+  --shadow-md:    rgba(0, 0, 0, 0.10);
+  --shadow-lg:    rgba(0, 0, 0, 0.18);
+  --primary-sub:  #eff6ff;
+  --chart-line:   #f1f5f9;
+}
+
+/* ─── Base ──────────────────────────────────────────────────────────────────── */
+* { box-sizing: border-box; }
+
+html, body {
+  background-color: var(--bg-page);
+  color: var(--text-1);
   font-family: "Inter", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #111318;
-}
-::-webkit-scrollbar-thumb {
-  background: #2a2d38;
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #3a3d4a;
-}
+/* ─── Scrollbar ─────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-sidebar); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-5); }
 
-/* Selection */
-::selection {
-  background: rgba(67, 97, 238, 0.3);
-  color: #f1f5f9;
-}
+::selection { background: rgba(0, 82, 255, 0.28); color: var(--text-1); }
 
+/* ─── Utility classes ───────────────────────────────────────────────────────── */
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
+  .text-balance { text-wrap: balance; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+}
+
+/* ─── Button system ─────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-weight: 600;
+  border-radius: 9px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.14s;
+  white-space: nowrap;
+  font-family: inherit;
+  font-size: 13px;
+  padding: 0 14px;
+  height: 36px;
+  background: #0052FF;
+  color: white;
+}
+.btn:hover { opacity: 0.88; }
+.btn:active { transform: scale(0.97); }
+
+.btn-ghost  { background: transparent; color: var(--text-3); box-shadow: none; }
+.btn-ghost:hover { background: var(--bg-hover); color: var(--text-1); opacity: 1; }
+
+.btn-icon   { background: transparent; color: var(--text-3); padding: 0; box-shadow: none; }
+.btn-icon:hover { background: var(--bg-hover); color: var(--text-1); opacity: 1; }
+
+.btn-xs     { height: 26px; padding: 0 10px; font-size: 11px; border-radius: 7px; }
+.btn-sm     { height: 32px; padding: 0 12px; font-size: 12px; }
+.btn-md     { height: 36px; padding: 0 16px; }
+.btn-lg     { height: 42px; padding: 0 20px; font-size: 14px; }
+
+.btn-sq-sm  { width: 30px; height: 30px; padding: 0; border-radius: 8px; }
+.btn-sq-md  { width: 36px; height: 36px; padding: 0; border-radius: 9px; }
+
+/* ─── Input ─────────────────────────────────────────────────────────────────── */
+.flowd-input {
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.flowd-input:focus {
+  border-color: #0052FF !important;
+  box-shadow: 0 0 0 3px rgba(0, 82, 255, 0.12);
+}
+
+/* ─── Page padding ──────────────────────────────────────────────────────────── */
+.page-pad { padding: 20px 18px; }
+@media (min-width: 768px) { .page-pad { padding: 24px 28px; } }
+
+/* ─── Animations ────────────────────────────────────────────────────────────── */
+.fade-in { animation: fadeIn 0.18s ease-out; }
+
+@keyframes fadeIn       { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes slideInUp    { from { transform: translateY(20px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes bounce       { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+
+/* ─── Dashboard grid helpers ────────────────────────────────────────────────── */
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+@media (min-width: 768px) {
+  .metric-grid { grid-template-columns: repeat(4, 1fr); gap: 14px; }
+}
+
+.dash-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+@media (min-width: 1024px) {
+  .dash-layout { flex-direction: row; gap: 16px; }
+}
+
+.dash-right     { display: flex; flex-direction: column; gap: 14px; width: 100%; }
+.dash-right-row { display: flex; flex-direction: column; gap: 14px; }
+@media (min-width: 1024px) {
+  .dash-right     { width: 290px; flex-shrink: 0; }
+  .dash-right-row { flex-direction: column; }
+}
+
+.chart-row {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+@media (min-width: 900px) {
+  .chart-row { flex-direction: row; }
+}
+
+/* ─── Integrations grid ─────────────────────────────────────────────────────── */
+.integ-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+@media (min-width: 640px)  { .integ-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1200px) { .integ-grid { grid-template-columns: repeat(3, 1fr); } }
+
+/* ─── Settings layout ───────────────────────────────────────────────────────── */
+.settings-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+@media (min-width: 768px) {
+  .settings-layout { flex-direction: row; gap: 28px; }
+}
+
+.settings-nav {
+  display: flex;
+  flex-direction: row;
+  overflow-x: auto;
+  gap: 4px;
+  padding-bottom: 12px;
+  flex-shrink: 0;
+}
+@media (min-width: 768px) {
+  .settings-nav {
+    flex-direction: column;
+    width: 200px;
+    padding-bottom: 0;
+    overflow-x: visible;
   }
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
+}
+
+/* ─── Table scroll ──────────────────────────────────────────────────────────── */
+.table-scroll { overflow-x: auto; }
+
+/* ─── Light theme: make Tailwind "text-white" use the themed foreground ─────── */
+/* "text-white" is used throughout as the primary text colour in dark mode.
+   In light mode we remap it so white-on-white text doesn't disappear.
+   Exceptions (.btn, badges, coloured chips) override this via their own color rule. */
+[data-theme="light"] .text-white {
+  color: var(--text-1);
+}
+/* Keep white text on primary-blue buttons */
+[data-theme="light"] .btn:not(.btn-ghost):not(.btn-icon) {
+  color: #ffffff;
+}
+
+/* ─── Light theme: fix hardcoded dark inline-style backgrounds ──────────────── */
+/* Some components still use Tailwind bg-* that now resolve to CSS vars — these
+   overrides catch any remaining inline-style stragglers for the most common values. */
+[data-theme="light"] .bg-\[\#161820\],
+[data-theme="light"] .bg-\[\#111318\],
+[data-theme="light"] .bg-\[\#0d0f14\],
+[data-theme="light"] .bg-\[\#1c1f2a\] {
+  background-color: var(--bg-card);
+}
+
+/* Input & search backgrounds in light mode */
+[data-theme="light"] input,
+[data-theme="light"] select,
+[data-theme="light"] textarea {
+  color: var(--text-1);
+  background-color: var(--bg-input);
+  border-color: var(--border);
+}
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder {
+  color: var(--text-4);
 }

@@ -310,11 +310,46 @@ npm run dev
 
 ## Build Status
 
-`npm run build` — passes cleanly as of initial scaffold.
+`npm run build` — passes cleanly. Latest production deployment: `dpl_6Fjm1f9rQ6TirJnT8i7Gv9FYMrAJ` (READY) — **https://flowd-nine.vercel.app**
+
+---
+
+## UI System
+
+Flowd uses a **single, unified design system** based on CSS custom properties. There is no legacy UI — the redesign is the only UI.
+
+### Design tokens (`globals.css`)
+- Dark theme on `:root`, light theme on `[data-theme="light"]`
+- Variables: `--bg-page`, `--bg-sidebar`, `--bg-card`, `--bg-input`, `--bg-hover`, `--text-1`…`--text-5`, `--border`, `--border-sub`, `--shadow`, `--shadow-lg`, `--primary`, `--primary-sub`
+- Utility classes: `.btn`, `.btn-ghost`, `.btn-icon`, `.flowd-input`, `.page-pad`, `.metric-grid`, `.dash-layout`, `.chart-row`, `.fade-in`
+
+### Layout components
+| Component | System used |
+|---|---|
+| `Sidebar.tsx` | CSS variables only (`var(--bg-sidebar)`, etc.) |
+| `Topbar.tsx` | CSS variables + `useDarkMode()` hook (`data-theme` toggle, localStorage) |
+| `DashboardShell.tsx` | CSS variables |
+| `(dashboard)/layout.tsx` | CSS variables |
+
+### Legacy UI primitives (`src/components/ui/`)
+`Badge`, `Button`, `Input`, `Modal` remain in use by dashboard pages. They use Tailwind semantic class names (`bg-card`, `text-white`, `border-border`, etc.) which are mapped to CSS variables in `tailwind.config.ts` — they are theme-aware and part of the design system.
+`Card` and `Spinner` were removed (unused).
+
+### Theme switching
+- Initialised in `<head>` (layout.tsx) before hydration — no flash on reload
+- Persisted to `localStorage` under key `flowd-theme`
+- Toggle in Topbar (sun/moon SVG), also available in landing page navbar
 
 ---
 
 ## Changelog
+
+### 2026-04-25 — UI audit: confirmed single design system, removed dead components
+- Verified no old Tailwind `dark:*` classes or legacy theme-toggle patterns anywhere in codebase
+- Confirmed CSS variable design system is the only UI (Sidebar, Topbar, DashboardShell all use `var(--*)`)
+- Removed unused `src/components/ui/Card.tsx` and `src/components/ui/Spinner.tsx`
+- Documented full UI system in PROJECT.md under new "UI System" section
+- Production URL confirmed: https://flowd-nine.vercel.app (deployment `dpl_6Fjm1f9rQ6TirJnT8i7Gv9FYMrAJ`)
 
 ### 2026-04-25 — Fix Vercel build TypeScript errors (webhook route)
 - Fixed 3 successive TypeScript `never` inference errors caused by untyped Supabase service-role client

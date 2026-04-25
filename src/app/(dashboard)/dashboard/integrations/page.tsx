@@ -144,7 +144,7 @@ const INTEGRATIONS: IntegrationDef[] = [
     name: "EddyApp",
     description: "Connectez EddyApp pour gérer vos livraisons et suivre vos colis en Algérie.",
     category: "Livraison",
-    icon: "⚡",
+    logo: "",
     color: "#F4A261",
     isMeta: false,
     fields: [

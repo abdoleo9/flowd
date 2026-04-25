@@ -136,11 +136,13 @@ async function processEvent(pageId: string, event: Record<string, unknown>) {
   const accessToken = creds.access_token;
 
   // ── Load workspace chatbot config ────────────────────────────────────────────
-  const { data: workspace } = await getSupabaseAdmin()
+  const { data: rawWorkspace } = await getSupabaseAdmin()
     .from("workspaces")
     .select("chatbot_config, name")
     .eq("id", workspaceId)
     .single();
+
+  const workspace = rawWorkspace as { chatbot_config: Record<string, string> | null; name: string } | null;
 
   const chatbotConfig = workspace?.chatbot_config ?? {
     product_category: "produits",

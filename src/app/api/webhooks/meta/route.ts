@@ -13,8 +13,9 @@ export const dynamic = "force-dynamic";
 const VERIFY_TOKEN = process.env.META_WEBHOOK_VERIFY_TOKEN ?? "flowd_webhook_2024";
 
 // ─── Supabase admin client (service role, lazy) ───────────────────────────────
-let _supabaseAdmin: ReturnType<typeof createClient> | null = null;
-function getSupabaseAdmin() {
+// Typed as `any` so chained query results aren't inferred as `never` by tsc
+let _supabaseAdmin: any = null;
+function getSupabaseAdmin(): any {
   if (!_supabaseAdmin) {
     _supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -136,13 +137,11 @@ async function processEvent(pageId: string, event: Record<string, unknown>) {
   const accessToken = creds.access_token;
 
   // ── Load workspace chatbot config ────────────────────────────────────────────
-  const { data: rawWorkspace } = await getSupabaseAdmin()
+  const { data: workspace } = await getSupabaseAdmin()
     .from("workspaces")
     .select("chatbot_config, name")
     .eq("id", workspaceId)
     .single();
-
-  const workspace = rawWorkspace as { chatbot_config: Record<string, string> | null; name: string } | null;
 
   const chatbotConfig = workspace?.chatbot_config ?? {
     product_category: "produits",

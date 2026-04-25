@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { getSupabaseServerClient } from '@/lib/supabase/server'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -9,19 +9,28 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid channel' }, { status: 400 })
   }
 
-  const supabase = await createClient()
+  const supabase = getSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  // Get active workspace
-  const { data: workspace } = await supabase
-    .from('workspaces')
-    .select('id')
-    .eq('owner_id', user.id)
+  // Resolve workspace via team_members (workspaces table has no owner_id column)
+  const { data: membership } = await supabase
+    .from('team_members')
+    .select('workspace_id')
+    .eq('user_id', user.id)
+    .eq('role', 'owner')
+    .order('joined_at', { ascending: true })
+    .limit(1)
     .single()
 
-  const workspaceId = workspace?.id ?? user.id
-  const state = Buffer.from(JSON.stringify({ workspaceId, channel, userId: user.id })).toString('base64url')
+  const workspaceId = membership?.workspace_id ?? null
+  if (!workspaceId) {
+    return NextResponse.json({ error: 'No workspace found for this user' }, { status: 400 })
+  }
+
+  const state = Buffer.from(
+    JSON.stringify({ workspaceId, channel, userId: user.id })
+  ).toString('base64url')
 
   const scopes: Record<string, string> = {
     instagram: 'instagram_basic,instagram_manage_messages,pages_show_list,pages_manage_metadata',

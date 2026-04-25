@@ -45,9 +45,22 @@ It unifies order management, AI-powered chatbot, delivery tracking, and platform
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
+
+# AI — Flowd uses Gemini exclusively (Google Gemini 2.5 Flash)
 GEMINI_API_KEY=
-GROQ_API_KEY=
+
+# Meta OAuth integration (Instagram, Messenger, WhatsApp)
+META_APP_ID=                        # From Meta App Settings → Basic
+META_APP_SECRET=                    # From Meta App Settings → Basic
+META_WEBHOOK_VERIFY_TOKEN=          # Any secret string — must match Meta webhook config
+NEXT_PUBLIC_APP_URL=                # Your deployed URL, e.g. https://flowd-nine.vercel.app
+NEXT_PUBLIC_META_APP_ID=            # Same as META_APP_ID (exposed to client for WhatsApp SDK)
+
+# Vercel Cron security
+CRON_SECRET=                        # Any secret string — Vercel sends this as Bearer token
 ```
+
+> **Note:** Flowd does NOT use Groq. All AI (chatbot webhook + streaming chat + landing page generation) runs on **Google Gemini 2.5 Flash** via `GEMINI_API_KEY`.
 
 ---
 
@@ -449,3 +462,64 @@ npm run dev
 **LOW — Stability**
 - `src/contexts/LanguageContext.tsx`: Wrapped all `localStorage` calls in `try/catch` — throws in private browsing mode (Safari, Firefox strict).
 - `src/app/(dashboard)/dashboard/landing-pages/page.tsx`: Fixed object URL memory leak — previous preview URL now revoked before creating new one, and revoked on component unmount.
+
+---
+
+### 2026-04-25 — Meta integration overhaul (10 fixes, production-ready)
+
+**AI Stack clarification**
+- Flowd uses **Google Gemini 2.5 Flash exclusively** for all AI. Groq is NOT used.
+- Webhook handler (`/api/webhooks/meta`) migrated from Groq (`llama-3.3-70b`) to Gemini 2.5 Flash.
+- Updated env vars documentation to remove `GROQ_API_KEY` and document all Meta + Cron vars.
+
+**Integrations page — UX overhaul**
+- Removed the 5-step Instagram wizard entirely (~300 lines deleted). Instagram and Messenger now use the OAuth button exclusively — zero manual token copying.
+- Added missing **EddyApp** card to the Livraison category.
+- Meta cards (Instagram, Messenger, WhatsApp) show a single "Connecter via Meta" button; non-Meta cards use the standard credentials modal.
+- Added `TokenExpiryWarning` component — shows amber badge when token expires in ≤7 days.
+
+**Critical bug fix — workspace_id**
+- `src/app/api/integrations/meta/connect/route.ts`: Was querying `workspaces.eq('owner_id', user.id)` — `owner_id` column does not exist. Now resolves workspace via `team_members` table (`.eq('role', 'owner')`). Without this fix, all OAuth integrations were saved with the user's auth ID as workspace_id, breaking chatbot routing entirely.
+
+**Security — webhook signature verification**
+- `src/app/api/webhooks/meta/route.ts`: Added `X-Hub-Signature-256` HMAC-SHA256 verification on every POST. Requests that fail verification are rejected with 403. Prevents anyone from injecting fake messages into the chatbot.
+
+**Performance — webhook async processing**
+- Webhook now returns `200 OK` to Meta instantly using `waitUntil` from `@vercel/functions`, then processes the message in the background. Eliminates the 20-second timeout risk that caused Meta to disable webhook subscriptions.
+- Integration lookup now queries by `credentials->>'page_id'` directly in JSONB instead of loading all integrations and filtering in JS. Scales to thousands of workspaces.
+
+**DB migration — `003_integrations_token_expiry.sql`**
+- Added `token_expires_at timestamptz` column to `integrations` table.
+- Added `idx_integrations_page_id` index on `(credentials->>'page_id') WHERE is_active = true` for fast webhook routing.
+
+**Token auto-refresh cron**
+- New route: `src/app/api/cron/refresh-meta-tokens/route.ts`
+- Secured by `CRON_SECRET` Bearer token.
+- Runs every Monday at 09:00 UTC (configured in `vercel.json`).
+- Calls `graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token` to reset the 60-day expiry on all active Meta tokens.
+- Updates `token_expires_at` and `credentials.user_token` in Supabase.
+- New file: `vercel.json` with cron schedule.
+
+**Page picker after OAuth**
+- `src/app/api/integrations/meta/callback/route.ts`: When the user manages multiple Facebook pages, the callback now sends a `META_PAGE_PICKER` postMessage to the opener instead of blindly taking `data[0]`.
+- `integrations/page.tsx`: Listens for `META_PAGE_PICKER` and renders a `PagePickerModal` so the user selects which page to connect. The selected page's token and ID are saved to Supabase directly from the client.
+
+**24-hour messaging window handling**
+- Webhook detects if the incoming message timestamp is older than 24 hours (can happen on webhook retries).
+- Expired-window conversations are marked `status: 'human_takeover'` in DB and a `WINDOW_EXPIRED` system message is logged.
+- When Meta Graph API returns a 24h window error (code 10 or subcode 2018278/2018109), same handling applies.
+
+**Opt-out / opt-in detection**
+- Webhook checks for STOP keywords (`stop`, `arrête`, `waqf`, `وقف`, `بطل`, `حبس`, etc.) before calling Gemini.
+- On STOP: conversation set to `resolved`, confirmation message sent, no further AI replies.
+- On START: conversation reopened to `bot` status.
+
+**New env vars required**
+```
+META_APP_ID=
+META_APP_SECRET=
+META_WEBHOOK_VERIFY_TOKEN=
+NEXT_PUBLIC_APP_URL=
+NEXT_PUBLIC_META_APP_ID=
+CRON_SECRET=
+```

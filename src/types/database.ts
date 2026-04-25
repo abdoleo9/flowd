@@ -100,6 +100,7 @@ export interface Integration {
   credentials: Record<string, string>;
   is_active: boolean;
   last_synced_at: string | null;
+  token_expires_at: string | null;
   created_at: string;
 }
 

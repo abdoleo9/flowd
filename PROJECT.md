@@ -316,6 +316,12 @@ npm run dev
 
 ## Changelog
 
+### 2026-04-25 — Fix Vercel build TypeScript errors (webhook route)
+- Fixed 3 successive TypeScript `never` inference errors caused by untyped Supabase service-role client
+- Root cause: `createClient` without a Database generic causes all `.from().select()` chain results to be typed as `never`
+- Fix: typed `_supabaseAdmin` as `any` so all query results propagate as `any` instead of `never`
+- Deployment `dpl_7dRCgZEaUdQKM9NLstBdbe5KtAof` confirmed READY — flowd-nine.vercel.app is live
+
 ### 2026-04-24 — Wire Meta connect buttons into integrations page
 - Updated `src/app/(dashboard)/dashboard/integrations/page.tsx`:
   - Imported `useMetaConnect` hook

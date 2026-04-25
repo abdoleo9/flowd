@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// @ts-nocheck — service-role Supabase client is untyped; all DB shapes cast manually
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/ban-ts-comment */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { waitUntil } from "@vercel/functions";
@@ -213,7 +212,7 @@ async function processEvent(pageId: string, event: Record<string, unknown>) {
       .eq("id", conversationId);
 
     const optOutReply = "✅ Vous avez été désinscrit des réponses automatiques. Envoyez 'START' pour vous réinscrire.";
-    await saveAndSend({ conversationId, senderId, accessToken, integration, replyText: optOutReply, pageId });
+    await saveAndSend({ conversationId, senderId, accessToken, integration, replyText: optOutReply });
     return;
   }
 
@@ -297,7 +296,7 @@ async function processEvent(pageId: string, event: Record<string, unknown>) {
     replyText = "أهلاً! راني نشوف ليك، نتواصل معاك قريباً إن شاء الله 🙏";
   }
 
-  await saveAndSend({ conversationId, senderId, accessToken, integration, replyText, pageId });
+  await saveAndSend({ conversationId, senderId, accessToken, integration, replyText });
 }
 
 // ─── Save reply to DB + send via Meta Graph API ───────────────────────────────
@@ -307,14 +306,12 @@ async function saveAndSend({
   accessToken,
   integration,
   replyText,
-  pageId,
 }: {
   conversationId: string;
   senderId: string;
   accessToken: string;
   integration: { type: string; credentials: Record<string, string> };
   replyText: string;
-  pageId: string;
 }) {
   await getSupabaseAdmin().from("messages").insert({
     conversation_id: conversationId,

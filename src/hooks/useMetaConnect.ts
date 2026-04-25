@@ -34,7 +34,14 @@ export function useMetaConnect(channel: MetaChannel, initialConnected = false) {
 
     setStatus('connecting')
 
-    let closedCheck: ReturnType<typeof setInterval>
+    // cleanup is a ref-like object so both onMessage and the interval can call it
+    // after closedCheck is assigned
+    let closedCheckId: ReturnType<typeof setInterval> | undefined
+
+    function cleanup() {
+      window.removeEventListener('message', onMessage)
+      if (closedCheckId !== undefined) clearInterval(closedCheckId)
+    }
 
     function onMessage(event: MessageEvent) {
       if (event.origin !== window.location.origin) return
@@ -54,15 +61,10 @@ export function useMetaConnect(channel: MetaChannel, initialConnected = false) {
       }
     }
 
-    function cleanup() {
-      window.removeEventListener('message', onMessage)
-      clearInterval(closedCheck)
-    }
-
     window.addEventListener('message', onMessage)
 
     // Detect if user manually closed the popup
-    closedCheck = setInterval(() => {
+    closedCheckId = setInterval(() => {
       if (popup.closed) {
         cleanup()
         setStatus((prev) => (prev === 'connecting' ? 'idle' : prev))

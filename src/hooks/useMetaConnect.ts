@@ -36,6 +36,7 @@ export function useMetaConnect(channel: MetaChannel, initialConnected = false) {
 
     // cleanup is a ref-like object so both onMessage and the interval can call it
     // after closedCheck is assigned
+    // eslint-disable-next-line prefer-const
     let closedCheckId: ReturnType<typeof setInterval> | undefined
 
     function cleanup() {

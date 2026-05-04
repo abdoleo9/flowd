@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseServerClient } from '@/lib/supabase/server';
+import { getSupabaseServerClient, getSupabaseServiceClient } from '@/lib/supabase/server';
 import { getGenAI } from '@/lib/claude';
 
 const WILAYAS = `Adrar,Chlef,Laghouat,Oum El Bouaghi,Batna,Béjaïa,Biskra,Béchar,Blida,Bouira,Tamanrasset,Tébessa,Tlemcen,Tiaret,Tizi Ouzou,Alger,Djelfa,Jijel,Sétif,Saïda,Skikda,Sidi Bel Abbès,Annaba,Guelma,Constantine,Médéa,Mostaganem,M'Sila,Mascara,Ouargla,Oran,El Bayadh,Illizi,Bordj Bou Arréridj,Boumerdès,El Tarf,Tindouf,Tissemsilt,El Oued,Khenchela,Souk Ahras,Tipaza,Mila,Aïn Defla,Naâma,Aïn Témouchent,Ghardaïa,Relizane,El M'Ghair,El Menia,Ouled Djellal,Bordj Baji Mokhtar,Béni Abbès,Timimoun,Touggourt,Djanet,In Salah,In Guezzam`;
@@ -11,7 +11,6 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
   const {
-    workspace_id,
     product_name,
     product_description,
     product_price,
@@ -22,11 +21,48 @@ export async function POST(req: NextRequest) {
     language,
     imageBase64,
     mimeType,
+    custom_slug,
   } = body;
 
-  const slug = `${product_name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now()}`;
+  // Resolve final slug
+  const autoBase = (product_name as string).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const slug =
+    custom_slug && /^[a-z0-9][a-z0-9-]*$/.test(custom_slug as string)
+      ? (custom_slug as string)
+      : `${autoBase}-${Date.now()}`;
+
   const isAr = language === 'ar';
-  const primary = color_theme || '#111827';
+  const primary = (color_theme as string) || '#111827';
+
+  // Upload image to Supabase Storage for CDN delivery
+  let image_url: string | null = null;
+  if (imageBase64 && mimeType) {
+    try {
+      const svc = getSupabaseServiceClient();
+      const ext = (mimeType as string).split('/')[1]?.replace('jpeg', 'jpg') ?? 'jpg';
+      const fileName = `${slug}-${Date.now()}.${ext}`;
+      const buffer = Buffer.from(imageBase64 as string, 'base64');
+      const { error: uploadError } = await svc.storage
+        .from('landing-page-images')
+        .upload(fileName, buffer, { contentType: mimeType as string, upsert: true });
+      if (!uploadError) {
+        const { data: { publicUrl } } = svc.storage
+          .from('landing-page-images')
+          .getPublicUrl(fileName);
+        image_url = publicUrl;
+      }
+    } catch {
+      // Fall back to base64 in HTML if Storage upload fails
+    }
+  }
+
+  // Build the product image tag — prefer CDN URL, fall back to base64, then placeholder
+  const imgStyle = `width:100%;max-width:500px;border-radius:20px;object-fit:cover;box-shadow:0 20px 60px rgba(0,0,0,0.15)`;
+  const imgTag = image_url
+    ? `<img src="${image_url}" alt="${product_name}" style="${imgStyle}">`
+    : imageBase64 && mimeType
+    ? `<img src="data:${mimeType};base64,${imageBase64}" alt="${product_name}" style="${imgStyle}">`
+    : `<div style="width:100%;max-width:500px;aspect-ratio:1;background:linear-gradient(135deg,var(--pl) 0%,var(--pm) 100%);border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:5rem;color:var(--p)">${(product_name as string).charAt(0).toUpperCase()}</div>`;
 
   const js = `<script>
 window.PAGE_SLUG='${slug}';
@@ -48,10 +84,6 @@ document.querySelectorAll('.fi').forEach(el=>obs.observe(el));
 </script>`;
 
   const wilayaOptions = WILAYAS.split(',').map(w => `<option value="${w.trim()}">${w.trim()}</option>`).join('');
-
-  const imgTag = imageBase64 && mimeType
-    ? `<img src="data:${mimeType};base64,${imageBase64}" alt="${product_name}" style="width:100%;max-width:500px;border-radius:20px;object-fit:cover;box-shadow:0 20px 60px rgba(0,0,0,0.15)">`
-    : `<div style="width:100%;max-width:500px;aspect-ratio:1;background:linear-gradient(135deg,var(--pl) 0%,var(--pm) 100%);border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:5rem;color:var(--p)">${product_name.charAt(0).toUpperCase()}</div>`;
 
   const prompt = `You are a world-class web designer. Build a premium, conversion-optimized product landing page.
 
@@ -82,7 +114,7 @@ DESIGN (mandatory):
 BUILD THESE 9 SECTIONS IN ORDER:
 
 1. NAVBAR — sticky, top:0, z-index:100, white bg, backdrop-filter:blur(12px), border-bottom:1px solid var(--bd), height:64px, flex, space-between, align-center, padding:0 24px
-   Left: bold brand name (${product_name.split(' ')[0]})
+   Left: bold brand name (${(product_name as string).split(' ')[0]})
    Center: 4 links (${isAr ? 'الرئيسية · عن المنتج · التقييمات · تواصل معنا' : 'Accueil · À propos · Avis · Contact'}) — font-size:0.9rem, color:var(--mt), no underline, gap:32px
    Right: filled pill button (${isAr ? 'اطلب الآن' : 'Commander'}) background:var(--p), color:white
 
@@ -166,17 +198,15 @@ ${js}`;
   try {
     type Part = { text: string } | { inlineData: { data: string; mimeType: string } };
     const contentParts: Part[] = [];
+    // Always send image to Gemini for multimodal generation even if we also uploaded to Storage
     if (imageBase64 && mimeType) {
-      contentParts.push({ inlineData: { data: imageBase64, mimeType } });
+      contentParts.push({ inlineData: { data: imageBase64 as string, mimeType: mimeType as string } });
     }
     contentParts.push({ text: prompt });
 
     const result = await model.generateContent({
       contents: [{ role: 'user', parts: contentParts }],
-      generationConfig: {
-        maxOutputTokens: 65536,
-        temperature: 0.7,
-      },
+      generationConfig: { maxOutputTokens: 65536, temperature: 0.7 },
     });
 
     html_content = result.response.text()
@@ -188,21 +218,6 @@ ${js}`;
     return NextResponse.json({ error: `Gemini error: ${msg}` }, { status: 500 });
   }
 
-  const { data: page, error } = await supabase
-    .from('landing_pages')
-    .insert({
-      workspace_id,
-      slug,
-      product_name,
-      product_description,
-      product_price,
-      html_content,
-      status: 'active',
-    })
-    .select()
-    .single();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  return NextResponse.json({ page, slug });
+  // Return generated HTML — caller is responsible for publishing via POST /api/landing-pages
+  return NextResponse.json({ html_content, slug, image_url });
 }

@@ -344,6 +344,54 @@ Flowd uses a **single, unified design system** based on CSS custom properties. T
 
 ## Changelog
 
+### 2026-05-04 — Landing page generator: 5 improvements
+
+**1. Edit & Regenerate**
+- Added edit (pencil) button to pages table — pre-fills the entire form from the page's stored `generation_config`
+- In edit mode, the form header changes to "Modifier et régénérer la page" and the button says "Régénérer avec l'IA"
+- After regeneration preview is confirmed, sends a PATCH to update the existing page (HTML, product fields, generation_config)
+- Slug is locked/read-only in edit mode to preserve existing URLs
+
+**2. Preview before publishing (two-step flow)**
+- Generate no longer saves to DB — it returns `{ html_content, slug, image_url }`
+- After generation a fullscreen preview modal opens with an iframe rendering the generated HTML
+- Header shows the target URL, a "Formulaire désactivé en aperçu" badge, and Annuler / Publier buttons
+- Clicking "Publier" calls `POST /api/landing-pages` (new page) or `PATCH /api/landing-pages/[id]` (regenerate)
+- "Annuler" discards the generated HTML without any DB write
+
+**3. Custom slug / URL**
+- Added a `/p/` URL field that auto-populates from the product name as the user types
+- User can override it manually; the field auto-sanitizes to `[a-z0-9-]`
+- Field is disabled (read-only) in edit mode since changing the URL would break existing links
+- Slug uniqueness violation (DB code 23505) returns a 409 with a clear French error message
+
+**4. Conversion rate column**
+- Pages table now has a "Conversion" column: `orders_count / views × 100`, shown as `x.x%`
+- Shows `—` when views = 0; shown in green when both views and orders are > 0
+
+**5. Images to CDN (Supabase Storage)**
+- `generate/route.ts` now uploads the product image to Supabase Storage bucket `landing-page-images` before generation
+- The generated HTML uses `<img src="https://...supabase.co/storage/...">` instead of a multi-MB base64 data URI
+- Falls back to base64 in HTML if Storage upload fails
+- Image URL stored in `product_images[0]` on the landing_pages row
+- Gemini still receives the image as base64 inlineData for multimodal generation
+
+**New migration: `supabase/migrations/004_landing_page_enhancements.sql`**
+- `ALTER TABLE landing_pages ADD COLUMN generation_config JSONB`
+- Creates `landing-page-images` public Storage bucket (5 MB limit, image MIME types only)
+- Storage RLS: authenticated upload, public read, authenticated delete
+
+**API changes:**
+- `POST /api/landing-pages/generate` — returns `{ html_content, slug, image_url }` without saving to DB
+- `POST /api/landing-pages` (NEW) — publish: inserts page to DB with all fields + generation_config
+- `PATCH /api/landing-pages/[id]` — extended: now accepts html_content, generation_config, image_url, product fields
+
+**Type changes (`src/types/database.ts`):**
+- Added `LandingPageGenerationConfig` interface
+- Added `generation_config?: LandingPageGenerationConfig` to `LandingPage`
+
+**Dependency added:** `@vercel/functions` (was referenced in webhook route but missing from package.json)
+
 ### 2026-04-25 — UI audit: confirmed single design system, removed dead components
 - Verified no old Tailwind `dark:*` classes or legacy theme-toggle patterns anywhere in codebase
 - Confirmed CSS variable design system is the only UI (Sidebar, Topbar, DashboardShell all use `var(--*)`)

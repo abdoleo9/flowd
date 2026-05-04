@@ -104,6 +104,14 @@ export interface Integration {
   created_at: string;
 }
 
+export interface LandingPageGenerationConfig {
+  product_category?: string;
+  target_audience?: string;
+  key_benefits?: string;
+  color_theme?: string;
+  language?: 'fr' | 'ar';
+}
+
 export interface LandingPage {
   id: string;
   workspace_id: string;
@@ -116,6 +124,7 @@ export interface LandingPage {
   status: 'active' | 'paused' | 'archived';
   views: number;
   orders_count: number;
+  generation_config?: LandingPageGenerationConfig;
   created_at: string;
   updated_at: string;
 }

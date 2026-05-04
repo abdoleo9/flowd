@@ -11,6 +11,51 @@ export function getGenAI(): GoogleGenerativeAI {
   return _genAI;
 }
 
+type GeminiPart = { text: string } | { inlineData: { data: string; mimeType: string } };
+
+// Try gemini-2.5-flash first; fall back to gemini-1.5-flash on 403/access-denied errors.
+export async function generateContentWithFallback(
+  contentParts: GeminiPart[],
+  generationConfig?: { maxOutputTokens?: number; temperature?: number }
+): Promise<string> {
+  const candidates = [
+    { model: "gemini-2.5-flash", apiVersion: "v1beta" as const },
+    { model: "gemini-1.5-flash", apiVersion: undefined },
+  ];
+
+  let lastError: unknown;
+  for (const { model, apiVersion } of candidates) {
+    try {
+      const genModel = apiVersion
+        ? getGenAI().getGenerativeModel({ model }, { apiVersion })
+        : getGenAI().getGenerativeModel({ model });
+
+      const result = await genModel.generateContent({
+        contents: [{ role: "user", parts: contentParts }],
+        generationConfig: {
+          maxOutputTokens: generationConfig?.maxOutputTokens ?? 65536,
+          temperature: generationConfig?.temperature ?? 0.7,
+        },
+      });
+      return result.response.text();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      // Only fall back for access/quota/permission errors
+      if (
+        msg.includes("403") ||
+        msg.toLowerCase().includes("denied") ||
+        msg.toLowerCase().includes("permission") ||
+        msg.toLowerCase().includes("quota")
+      ) {
+        lastError = err;
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw lastError ?? new Error("All Gemini models failed");
+}
+
 export interface ChatbotConfig {
   product_category: string;   // e.g. "smartphones et électronique"
   delivery_days: string;      // e.g. "3 à 7"

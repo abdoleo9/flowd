@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient, getSupabaseServiceClient } from '@/lib/supabase/server';
-import { getGenAI } from '@/lib/claude';
+import { generateContentWithFallback } from '@/lib/claude';
 
 const WILAYAS = `Adrar,Chlef,Laghouat,Oum El Bouaghi,Batna,Béjaïa,Biskra,Béchar,Blida,Bouira,Tamanrasset,Tébessa,Tlemcen,Tiaret,Tizi Ouzou,Alger,Djelfa,Jijel,Sétif,Saïda,Skikda,Sidi Bel Abbès,Annaba,Guelma,Constantine,Médéa,Mostaganem,M'Sila,Mascara,Ouargla,Oran,El Bayadh,Illizi,Bordj Bou Arréridj,Boumerdès,El Tarf,Tindouf,Tissemsilt,El Oued,Khenchela,Souk Ahras,Tipaza,Mila,Aïn Defla,Naâma,Aïn Témouchent,Ghardaïa,Relizane,El M'Ghair,El Menia,Ouled Djellal,Bordj Baji Mokhtar,Béni Abbès,Timimoun,Touggourt,Djanet,In Salah,In Guezzam`;
 
@@ -192,11 +192,6 @@ BUILD THESE 9 SECTIONS IN ORDER:
 END WITH:
 ${js}`;
 
-  const model = getGenAI().getGenerativeModel(
-    { model: 'gemini-2.5-flash' },
-    { apiVersion: 'v1beta' }
-  );
-
   let html_content: string;
   try {
     type Part = { text: string } | { inlineData: { data: string; mimeType: string } };
@@ -207,12 +202,7 @@ ${js}`;
     }
     contentParts.push({ text: prompt });
 
-    const result = await model.generateContent({
-      contents: [{ role: 'user', parts: contentParts }],
-      generationConfig: { maxOutputTokens: 65536, temperature: 0.7 },
-    });
-
-    html_content = result.response.text()
+    html_content = (await generateContentWithFallback(contentParts, { maxOutputTokens: 65536, temperature: 0.7 }))
       .replace(/^```html\n?/, '')
       .replace(/\n?```$/, '')
       .trim();

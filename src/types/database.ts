@@ -105,11 +105,28 @@ export interface Integration {
 }
 
 export interface LandingPageGenerationConfig {
+  mode?: 'landing' | 'funnel';
+  // landing-mode fields
   product_category?: string;
   target_audience?: string;
   key_benefits?: string;
   color_theme?: string;
   language?: 'fr' | 'ar';
+  // funnel-mode fields
+  original_price?: number;
+  discount_label?: string;
+  funnel_key_benefits?: string[];
+  how_it_works?: string[];
+  urgency_stock?: number;
+  delivery_days?: string;
+  delivery_free?: boolean;
+  color_primary?: string;
+  testimonials?: {
+    name: string;
+    city: string;
+    rating: number;
+    comment: string;
+  }[];
 }
 
 export interface LandingPage {

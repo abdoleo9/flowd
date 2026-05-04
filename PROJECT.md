@@ -310,7 +310,7 @@ npm run dev
 
 ## Build Status
 
-`npm run build` — passes cleanly. Latest production deployment: `dpl_6Fjm1f9rQ6TirJnT8i7Gv9FYMrAJ` (READY) — **https://flowd-nine.vercel.app**
+`npm run build` — passes cleanly (34 routes). Latest production deployment: `dpl_7o1Hux5159HU8NdTXtYUiz6aRvT4` (merge: Sales Funnel Generator feature) — **https://flowd-nine.vercel.app**
 
 ---
 
@@ -343,6 +343,50 @@ Flowd uses a **single, unified design system** based on CSS custom properties. T
 ---
 
 ## Changelog
+
+### 2026-05-04 — Sales Funnel Generator (Algerian dropshipping market)
+
+**New feature: AI-powered sales funnel generator mode alongside the existing landing page generator**
+
+- **Mode toggle** on `/dashboard/landing-pages`: two large buttons — "📄 Page Produit" (existing) and "🔥 Funnel de Vente" (new). Toggle resets form fields per mode.
+
+- **New API route** `POST /api/landing-pages/generate-funnel` (`src/app/api/landing-pages/generate-funnel/route.ts`)
+  - Auth-protected, same workspace pattern as other routes
+  - Accepts: product_name, product_description, product_price, original_price?, discount_label?, product_category, key_benefits[], how_it_works[]?, urgency_stock?, delivery_days, delivery_free, testimonials[]?, language ('ar'|'fr'), color_primary?, image_base64?, image_mime_type?, workspace_id
+  - Uploads image to Supabase Storage CDN (`landing-page-images` bucket) before generation
+  - Builds a detailed Gemini prompt for a 9-section dark-mode conversion funnel
+  - Calls Gemini 2.5 Flash (`gemini-2.5-flash`, `apiVersion: v1beta`) — multimodal if image provided
+  - Injects all 58 Algerian wilayas as hardcoded `<option>` elements from `src/constants/wilayas.ts`
+  - Saves directly to `landing_pages` table (no two-step preview — funnel publishes on generation)
+  - Returns `{ slug, url: /p/${slug} }`
+
+- **Generated funnel page HTML — 9 sections:**
+  1. Sticky top bar (brand initial circle, truncated product name, CTA button → scrolls to #order-form)
+  2. Hero (full-width product image/gradient placeholder, star rating badge, AI-written headline + sub-headline, price with crossed-out original + discount badge)
+  3. Trust bar (horizontal scroll: delivery time, paiement à la livraison, retour garanti, +5000 clients)
+  4. Benefits section (2-col grid of cards with emoji icons, AI-picks emojis per benefit)
+  5. How it works (3 numbered steps — omitted if not provided)
+  6. Urgency block (dark red gradient, pulsing stock count, delivery CTA)
+  7. Testimonials (horizontal scroll, 4 cards — uses provided or AI-generates realistic Algerian ones)
+  8. Order form (product recap, price summary with live quantity × total JS, 6 fields including all 58 wilayas select, CTA → POST /api/landing-pages/order, success state replaces form)
+  9. Footer (Flowd Store, Instagram + Facebook SVG icons)
+  - Dark theme: `#0a0a0a` bg, `#141414` cards, configurable primary CTA color
+  - RTL if Arabic, LTR if French
+  - Mobile-first (480px primary target)
+  - IntersectionObserver fade-in, smooth scroll, scrollbar hidden on horizontal areas
+
+- **Funnel dashboard form fields:**
+  - Shared: product photo upload, product name, final price, description, language toggle, auto-fill with AI
+  - Funnel-only: original price (crossed out), discount label, category select (7 options), dynamic key benefits list (3–6 items with +/− buttons), 3 how-it-works steps (optional), stock urgency number, delivery days, free delivery checkbox, CTA color picker
+
+- **Pages table badge:** funnel pages show `🔥 Funnel` badge (checks `generation_config.mode === 'funnel'`)
+
+- **TypeScript types** — `LandingPageGenerationConfig` in `src/types/database.ts` extended with:
+  `mode`, `original_price`, `discount_label`, `funnel_key_benefits`, `how_it_works`, `urgency_stock`, `delivery_days`, `delivery_free`, `color_primary`, `testimonials[]`
+
+- **Dependency fix:** installed `@vercel/functions` which was in package.json but not in node_modules, causing build failure
+
+- `npm run build` passes — 34 routes, `/api/landing-pages/generate-funnel` confirmed in build output
 
 ### 2026-05-04 — Bug fixes (4 bugs)
 

@@ -220,6 +220,10 @@ export default function LandingPagesPage() {
     try {
       let imageBase64: string | undefined;
       let mimeType: string | undefined;
+      // In edit mode, productImage is null but imagePreview may be an existing CDN URL
+      const existingImageUrl =
+        !productImage && imagePreview?.startsWith("http") ? imagePreview : undefined;
+
       if (productImage) {
         const res = await toBase64(productImage);
         imageBase64 = res.base64;
@@ -240,6 +244,7 @@ export default function LandingPagesPage() {
           language: pageLanguage,
           imageBase64,
           mimeType,
+          existing_image_url: existingImageUrl,
           custom_slug: customSlug || undefined,
         }),
       });

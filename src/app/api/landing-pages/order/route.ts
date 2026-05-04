@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServiceClient } from '@/lib/supabase/server';
 
+// Ordered 1-58 to map wilaya name → integer code for the orders table
+const WILAYA_NAMES = [
+  'Adrar','Chlef','Laghouat','Oum El Bouaghi','Batna','Béjaïa','Biskra','Béchar',
+  'Blida','Bouira','Tamanrasset','Tébessa','Tlemcen','Tiaret','Tizi Ouzou','Alger',
+  'Djelfa','Jijel','Sétif','Saïda','Skikda','Sidi Bel Abbès','Annaba','Guelma',
+  'Constantine','Médéa','Mostaganem',"M'Sila",'Mascara','Ouargla','Oran','El Bayadh',
+  'Illizi','Bordj Bou Arréridj','Boumerdès','El Tarf','Tindouf','Tissemsilt','El Oued',
+  'Khenchela','Souk Ahras','Tipaza','Mila','Aïn Defla','Naâma','Aïn Témouchent',
+  'Ghardaïa','Relizane','El M\'Ghair','El Menia','Ouled Djellal','Bordj Baji Mokhtar',
+  'Béni Abbès','Timimoun','Touggourt','Djanet','In Salah','In Guezzam',
+];
+
 export async function POST(req: NextRequest) {
   const supabase = getSupabaseServiceClient();
   const body = await req.json();
@@ -27,8 +39,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: 'Page not found' }, { status: 404 });
   }
 
-  const total_price = page.product_price * (quantity || 1);
+  const qty = Math.max(1, parseInt(quantity) || 1);
+  const total_price = page.product_price * qty;
   const reference = `ORD-LP-${Date.now().toString().slice(-8)}`;
+
+  // Map wilaya name to 1-58 integer code required by the orders table constraint
+  const wilayaIdx = WILAYA_NAMES.indexOf(wilaya);
+  const wilaya_code = wilayaIdx >= 0 ? wilayaIdx + 1 : 1;
 
   const { error: orderError } = await supabase
     .from('orders')
@@ -37,11 +54,11 @@ export async function POST(req: NextRequest) {
       reference,
       customer_name,
       customer_phone,
-      wilaya_code: wilaya,
+      wilaya_code,
       commune,
       address: commune,
       product_name: page.product_name,
-      quantity: quantity || 1,
+      quantity: qty,
       unit_price: page.product_price,
       total_price,
       status: 'pending',

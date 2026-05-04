@@ -22,6 +22,7 @@ export async function POST(req: NextRequest) {
     imageBase64,
     mimeType,
     custom_slug,
+    existing_image_url,
   } = body;
 
   // Resolve final slug
@@ -34,8 +35,10 @@ export async function POST(req: NextRequest) {
   const isAr = language === 'ar';
   const primary = (color_theme as string) || '#111827';
 
-  // Upload image to Supabase Storage for CDN delivery
-  let image_url: string | null = null;
+  // Upload image to Supabase Storage for CDN delivery.
+  // If no new image was uploaded but an existing CDN URL was provided (edit/regenerate mode),
+  // reuse it directly without re-uploading.
+  let image_url: string | null = (existing_image_url as string) || null;
   if (imageBase64 && mimeType) {
     try {
       const svc = getSupabaseServiceClient();

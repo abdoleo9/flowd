@@ -344,6 +344,25 @@ Flowd uses a **single, unified design system** based on CSS custom properties. T
 
 ## Changelog
 
+### 2026-05-04 — Bug fixes (4 bugs)
+
+**BUG 1 — CRITICAL: Landing page orders silently failing (`order/route.ts`)**
+- Root cause: `wilaya_code: wilaya` was inserting the wilaya name string (e.g. "Alger") into a `smallint NOT NULL CHECK (1-58)` column — every order submitted from a public landing page was rejected by Postgres.
+- Fix: Added `WILAYA_NAMES` array (58 entries, ordered 1–58) and mapped the incoming name to its integer code before insert.
+- Also tightened quantity handling: `Math.max(1, parseInt(quantity) || 1)` instead of `quantity || 1`.
+
+**BUG 2 — HIGH: Regenerating a page in edit mode lost the product image (`page.tsx` + `generate/route.ts`)**
+- Root cause: In edit mode `productImage` (a `File`) is null, so no image data was sent to the generate API — the regenerated page rendered a placeholder div instead of the product image.
+- Fix: In `handleGenerate`, detect when `imagePreview` is an existing CDN URL and pass it as `existing_image_url`. The generate route now initialises `image_url` from this value before attempting a new Storage upload, so the existing CDN URL is reused without re-uploading.
+
+**BUG 3 — HIGH: Incoming message reset `human_takeover` conversations back to bot (`webhooks/meta/route.ts`)**
+- Root cause: Condition `status !== "open" && status !== "bot"` matched `human_takeover` and overwrote it with `"bot"`, causing the AI to resume replying in conversations an agent had taken over.
+- Fix: Removed the status-changing branch entirely. The webhook now only updates `updated_at` on existing conversations, preserving whatever status is set (including `human_takeover`).
+
+**BUG 4 — MEDIUM: Image auto-fill (analyze-image) broken for Gemini 2.5 Flash (`analyze-image/route.ts`)**
+- Root cause: Missing `{ apiVersion: 'v1beta' }` — `gemini-2.5-flash` requires the v1beta endpoint. This was already fixed in `generate/route.ts` but missed in `analyze-image/route.ts`.
+- Fix: Added `{ apiVersion: 'v1beta' }` to `getGenerativeModel()` call.
+
 ### 2026-05-04 — Landing page generator: 5 improvements
 
 **1. Edit & Regenerate**

@@ -165,17 +165,12 @@ async function processEvent(pageId: string, event: Record<string, unknown>) {
 
   if (existingConv) {
     conversationId = existingConv.id as string;
-    if (existingConv.status !== "open" && existingConv.status !== "bot") {
-      await getSupabaseAdmin()
-        .from("conversations")
-        .update({ status: "bot", updated_at: new Date().toISOString() })
-        .eq("id", conversationId);
-    } else {
-      await getSupabaseAdmin()
-        .from("conversations")
-        .update({ updated_at: new Date().toISOString() })
-        .eq("id", conversationId);
-    }
+    // Never auto-reset human_takeover — a human agent is handling this conversation.
+    // Only update the timestamp to surface it as recently active.
+    await getSupabaseAdmin()
+      .from("conversations")
+      .update({ updated_at: new Date().toISOString() })
+      .eq("id", conversationId);
   } else {
     const { data: newConv, error: convError } = await getSupabaseAdmin()
       .from("conversations")

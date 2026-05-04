@@ -9,7 +9,10 @@ export async function POST(req: NextRequest) {
 
   const { imageBase64, mimeType } = await req.json();
 
-  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.5-flash' });
+  const model = getGenAI().getGenerativeModel(
+    { model: 'gemini-2.5-flash' },
+    { apiVersion: 'v1beta' }
+  );
 
   try {
     const result = await model.generateContent([

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
-import { getGenAI } from '@/lib/claude';
+import { generateContentWithFallback } from '@/lib/claude';
 
 export async function POST(req: NextRequest) {
   const supabase = getSupabaseServerClient();
@@ -9,13 +9,8 @@ export async function POST(req: NextRequest) {
 
   const { imageBase64, mimeType } = await req.json();
 
-  const model = getGenAI().getGenerativeModel(
-    { model: 'gemini-2.5-flash' },
-    { apiVersion: 'v1beta' }
-  );
-
   try {
-    const result = await model.generateContent([
+    const raw = await generateContentWithFallback([
       {
         inlineData: {
           data: imageBase64,
@@ -40,7 +35,7 @@ Rules:
       },
     ]);
 
-    const text = result.response.text()
+    const text = raw
       .replace(/```json\n?/g, '')
       .replace(/\n?```/g, '')
       .trim();

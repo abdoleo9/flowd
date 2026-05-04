@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient, getSupabaseServiceClient } from '@/lib/supabase/server';
-import { getGenAI } from '@/lib/claude';
+import { generateContentWithFallback } from '@/lib/claude';
 import { WILAYAS } from '@/constants/wilayas';
 
 function slugify(text: string): string {
@@ -324,11 +324,6 @@ document.querySelectorAll('[data-scroll-order]').forEach(el => {
   el.addEventListener('click', () => document.getElementById('order-form').scrollIntoView({ behavior: 'smooth' }));
 });`;
 
-  const model = getGenAI().getGenerativeModel(
-    { model: 'gemini-2.5-flash' },
-    { apiVersion: 'v1beta' }
-  );
-
   let html_content: string;
   try {
     type Part = { text: string } | { inlineData: { data: string; mimeType: string } };
@@ -338,12 +333,7 @@ document.querySelectorAll('[data-scroll-order]').forEach(el => {
     }
     contentParts.push({ text: prompt });
 
-    const result = await model.generateContent({
-      contents: [{ role: 'user', parts: contentParts }],
-      generationConfig: { maxOutputTokens: 65536, temperature: 0.7 },
-    });
-
-    html_content = result.response.text()
+    html_content = (await generateContentWithFallback(contentParts, { maxOutputTokens: 65536, temperature: 0.7 }))
       .replace(/^```html\n?/, '')
       .replace(/\n?```$/, '')
       .trim();

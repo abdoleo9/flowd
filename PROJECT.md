@@ -347,6 +347,11 @@ Flowd uses a **single, unified design system** based on CSS custom properties. T
 
 ## Changelog
 
+### 2026-05-05 — Fix public landing page rendering blank (nested HTML bug)
+
+- **`src/app/p/[slug]/page.tsx`** — deleted. Was wrapping Gemini-generated full HTML documents inside a React `<body>`, causing browsers to ignore inner `<style>` and `<body>` tags — page appeared blank.
+- **`src/app/p/[slug]/route.ts`** (new) — replaced with a Route Handler that serves `html_content` directly as `text/html`. Gemini generates a complete `<!DOCTYPE html>` document; this approach serves it correctly without any wrapper.
+
 ### 2026-05-05 — Fix fal.ai image generation: pass CDN URL instead of base64 data URL
 
 - **`src/lib/fal.ts`** — `generateProductImageVariant` now accepts a public HTTP/HTTPS URL instead of base64+mimeType. fal.ai's API rejects `data:` URLs, so variant images were silently always null before this fix.

@@ -347,6 +347,10 @@ Flowd uses a **single, unified design system** based on CSS custom properties. T
 
 ## Changelog
 
+### 2026-05-05 — Use fal.ai white-bg variant as hero image in funnel
+
+- **`src/app/api/landing-pages/generate-funnel/route.ts`** — hero image now uses `variantImages[0]` (fal.ai white-background studio shot) when available, falls back to original CDN upload. Previously the original (potentially low-quality) image was always used as hero regardless of fal.ai success.
+
 ### 2026-05-05 — Fix public landing page rendering blank (nested HTML bug)
 
 - **`src/app/p/[slug]/page.tsx`** — deleted. Was wrapping Gemini-generated full HTML documents inside a React `<body>`, causing browsers to ignore inner `<style>` and `<body>` tags — page appeared blank.

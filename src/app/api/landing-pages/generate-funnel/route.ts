@@ -98,15 +98,11 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Build hero image HTML (server-side, injected verbatim into prompt)
-  const heroSrc = image_url
-    ? image_url
-    : (image_base64 && image_mime_type)
-    ? `data:${image_mime_type};base64,${image_base64}`
-    : null;
+  // Hero uses fal.ai white-bg studio variant if available, falls back to original CDN image
+  const heroSrc = variantImages[0] ?? image_url ?? null;
 
   const heroImgHtml = heroSrc
-    ? `<img src="${heroSrc}" alt="${product_name}" style="width:100%;max-height:380px;object-fit:contain;background:#F9FAFB;padding:16px;display:block;" loading="lazy">`
+    ? `<img src="${heroSrc}" alt="${product_name}" style="width:100%;max-height:380px;object-fit:contain;background:#FFFFFF;padding:16px;display:block;" loading="lazy">`
     : `<div style="width:100%;height:280px;background:linear-gradient(135deg,${primary}33,${primary}88);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:${primary};padding:16px;text-align:center;">${product_name}</div>`;
 
   // Variant image elements for injection into prompt

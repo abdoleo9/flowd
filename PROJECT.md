@@ -313,7 +313,7 @@ npm run dev
 
 ## Build Status
 
-`npm run build` — passes cleanly (34 routes). Latest production deployment: `dpl_7o1Hux5159HU8NdTXtYUiz6aRvT4` (merge: Sales Funnel Generator feature) — **https://flowd-nine.vercel.app**
+`npm run build` — passes cleanly (34 routes). Latest production deployment: `dpl_E3YnPUUrYnauDiXBCumGgyyWuFYQ (Funnel Generator V2 — fal.ai + white bg) — **https://flowd-nine.vercel.app** / **https://flowd.store****
 
 ---
 

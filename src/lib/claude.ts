@@ -13,14 +13,14 @@ export function getGenAI(): GoogleGenerativeAI {
 
 type GeminiPart = { text: string } | { inlineData: { data: string; mimeType: string } };
 
-// Try gemini-2.5-flash first; fall back to gemini-1.5-flash on 403/503/access-denied/high-demand errors.
+// Try gemini-2.5-flash first; fall back to gemini-2.0-flash on 403/503/access-denied/high-demand errors.
 export async function generateContentWithFallback(
   contentParts: GeminiPart[],
   generationConfig?: { maxOutputTokens?: number; temperature?: number }
 ): Promise<string> {
   const candidates = [
     { model: "gemini-2.5-flash", apiVersion: "v1beta" as const },
-    { model: "gemini-1.5-flash", apiVersion: undefined },
+    { model: "gemini-2.0-flash", apiVersion: "v1beta" as const },
   ];
 
   let lastError: unknown;

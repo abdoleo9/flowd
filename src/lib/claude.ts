@@ -13,22 +13,21 @@ export function getGenAI(): GoogleGenerativeAI {
 
 type GeminiPart = { text: string } | { inlineData: { data: string; mimeType: string } };
 
-// Try gemini-2.5-flash first; fall back to gemini-1.5-flash on 403/access-denied errors.
+// Try gemini-2.5-flash first; fall back to gemini-2.5-flash-lite on transient errors.
+// gemini-2.0-flash was deprecated — shutdown June 1 2026. gemini-1.5-flash not available on v1beta.
 export async function generateContentWithFallback(
   contentParts: GeminiPart[],
   generationConfig?: { maxOutputTokens?: number; temperature?: number }
 ): Promise<string> {
   const candidates = [
     { model: "gemini-2.5-flash", apiVersion: "v1beta" as const },
-    { model: "gemini-1.5-flash", apiVersion: undefined },
+    { model: "gemini-2.5-flash-lite", apiVersion: "v1beta" as const },
   ];
 
   let lastError: unknown;
   for (const { model, apiVersion } of candidates) {
     try {
-      const genModel = apiVersion
-        ? getGenAI().getGenerativeModel({ model }, { apiVersion })
-        : getGenAI().getGenerativeModel({ model });
+      const genModel = getGenAI().getGenerativeModel({ model }, { apiVersion });
 
       const result = await genModel.generateContent({
         contents: [{ role: "user", parts: contentParts }],
@@ -40,12 +39,16 @@ export async function generateContentWithFallback(
       return result.response.text();
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      // Only fall back for access/quota/permission errors
+      // Fall back for access/quota/availability errors (403, 503, high demand, overloaded)
       if (
         msg.includes("403") ||
+        msg.includes("503") ||
         msg.toLowerCase().includes("denied") ||
         msg.toLowerCase().includes("permission") ||
-        msg.toLowerCase().includes("quota")
+        msg.toLowerCase().includes("quota") ||
+        msg.toLowerCase().includes("unavailable") ||
+        msg.toLowerCase().includes("high demand") ||
+        msg.toLowerCase().includes("overloaded")
       ) {
         lastError = err;
         continue;

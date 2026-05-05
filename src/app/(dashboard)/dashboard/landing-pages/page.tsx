@@ -29,12 +29,20 @@ const LOADING_MESSAGES = [
   "Finalisation du design...",
 ];
 
-const FUNNEL_LOADING_MESSAGES = [
-  "Construction du funnel...",
-  "Rédaction des accroches...",
-  "Optimisation pour le marché algérien...",
-  "Ajout des sections de conversion...",
-  "Finalisation du design mobile...",
+const FUNNEL_LOADING_MESSAGES_FR = [
+  "🎨 Analyse de l'image produit...",
+  "🖼️ Génération des visuels produit...",
+  "✍️ Rédaction des textes de vente...",
+  "🔧 Construction du funnel...",
+  "✨ Touches finales...",
+];
+
+const FUNNEL_LOADING_MESSAGES_AR = [
+  "🎨 جاري تحليل صورة المنتج...",
+  "🖼️ جاري توليد صور المنتج بالذكاء الاصطناعي...",
+  "✍️ جاري كتابة نصوص المبيعات...",
+  "🔧 جاري بناء صفحة الفانل...",
+  "✨ لمسات أخيرة...",
 ];
 
 function autoSlugify(name: string): string {
@@ -132,18 +140,21 @@ export default function LandingPagesPage() {
   }, [productName, slugManuallyEdited, pageMode]);
 
   // Rotate loading messages
-  const msgs = pageMode === "funnel" ? FUNNEL_LOADING_MESSAGES : LOADING_MESSAGES;
+  const msgs = pageMode === "funnel"
+    ? (pageLanguage === "ar" ? FUNNEL_LOADING_MESSAGES_AR : FUNNEL_LOADING_MESSAGES_FR)
+    : LOADING_MESSAGES;
+  const msgsInterval = pageMode === "funnel" ? 5000 : 2000;
   useEffect(() => {
     if (generating) {
       loadingIntervalRef.current = setInterval(() => {
         setLoadingMsgIdx((i) => (i + 1) % msgs.length);
-      }, 2000);
+      }, msgsInterval);
     } else {
       if (loadingIntervalRef.current) clearInterval(loadingIntervalRef.current);
       setLoadingMsgIdx(0);
     }
     return () => { if (loadingIntervalRef.current) clearInterval(loadingIntervalRef.current); };
-  }, [generating, msgs.length]);
+  }, [generating, msgs.length, msgsInterval]);
 
   const fetchPages = useCallback(async () => {
     if (!workspace?.id) return;

@@ -22,7 +22,6 @@ export async function POST(req: NextRequest) {
     !customer_name?.trim() ||
     !customer_phone?.trim() ||
     !wilaya?.trim() ||
-    !commune?.trim() ||
     !page_slug?.trim()
   ) {
     return NextResponse.json({ success: false, error: 'Champs obligatoires manquants' }, { status: 400 });
@@ -43,9 +42,11 @@ export async function POST(req: NextRequest) {
   const total_price = page.product_price * qty;
   const reference = `ORD-LP-${Date.now().toString().slice(-8)}`;
 
-  // Map wilaya name to 1-58 integer code required by the orders table constraint
-  const wilayaIdx = WILAYA_NAMES.indexOf(wilaya);
-  const wilaya_code = wilayaIdx >= 0 ? wilayaIdx + 1 : 1;
+  // Map wilaya to 1-58 integer code: accept numeric code (new funnel form) or name (legacy)
+  const parsedCode = parseInt(wilaya as string, 10);
+  const wilaya_code = (parsedCode >= 1 && parsedCode <= 58)
+    ? parsedCode
+    : Math.max(1, WILAYA_NAMES.indexOf(wilaya as string) + 1);
 
   const { error: orderError } = await supabase
     .from('orders')

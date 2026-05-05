@@ -127,6 +127,7 @@ export interface LandingPageGenerationConfig {
     rating: number;
     comment: string;
   }[];
+  fal_variant_urls?: (string | null)[];
 }
 
 export interface LandingPage {

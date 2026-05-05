@@ -49,6 +49,9 @@ SUPABASE_SERVICE_ROLE_KEY=
 # AI — Flowd uses Gemini exclusively (Google Gemini 2.5 Flash)
 GEMINI_API_KEY=
 
+# fal.ai — product image variant generation for funnels
+FAL_API_KEY=        # From fal.ai dashboard → API Keys
+
 # Meta OAuth integration (Instagram, Messenger, WhatsApp)
 META_APP_ID=                        # From Meta App Settings → Basic
 META_APP_SECRET=                    # From Meta App Settings → Basic
@@ -343,6 +346,53 @@ Flowd uses a **single, unified design system** based on CSS custom properties. T
 ---
 
 ## Changelog
+
+### 2026-05-05 — Funnel Generator V2: white background + fal.ai image generation + 3-field form
+
+**Core changes:**
+
+- **`src/lib/fal.ts`** (new) — fal.ai FLUX image-to-image client
+  - `generateProductImageVariant()` — submits job to fal.ai queue, polls until COMPLETED (max 60s, 2s intervals)
+  - `generateFunnelProductImages()` — generates 3 variants in parallel: white bg studio shot (strength 0.65), lifestyle scene (0.80), detail/macro shot (0.80)
+  - Fully resilient: any failure returns `null`, never throws to caller
+
+- **`src/app/api/landing-pages/generate-funnel/route.ts`** (complete rewrite)
+  - Calls `generateFunnelProductImages()` BEFORE Gemini — variant URLs embedded in generated HTML
+  - Fetches workspace name (for topbar & footer) instead of hardcoding "Flowd Store"
+  - **Completely new Gemini prompt** — white background design (#FFFFFF), correct Algerian dropshipping aesthetic
+  - 10-section funnel: sticky topbar → hero → rating+price block → trust bar → benefits → how-it-works → urgency → testimonials → order form → footer
+  - Hero: full-width product image on #F9FAFB background, `object-fit: contain`
+  - Rating pill: "⭐ 4.8/5 · 97% taux de satisfaction · +5000 avis"
+  - Price: 32px red final price + crossed-out original + discount badge
+  - Benefits: simple ✅ list (not grid cards)
+  - Testimonials: Darija dialect with real Algerian names + cities
+  - **Order form: exactly 3 fields** (name, phone, wilaya) — removed commune/quantity/notes
+  - Order JS: sends `{ customer_name, customer_phone, wilaya (numeric code), commune: "", product_name, unit_price, quantity: 1, page_slug, notes: "" }`
+  - Variant images placed in: benefits section (variant 1), how-it-works (variant 2), above order form (variant 3)
+  - IntersectionObserver fade-in; first 2 sections start visible (above fold)
+  - `fal_variant_urls` saved in `generation_config`
+
+- **`src/app/api/landing-pages/order/route.ts`** — two fixes for new 3-field funnel form
+  - Removed `commune` from required fields validation (new form doesn't collect it)
+  - Wilaya resolution now handles numeric code (new form sends `value="${w.code}"`) in addition to name (legacy form)
+
+- **`src/types/database.ts`** — `LandingPageGenerationConfig` extended with `fal_variant_urls?: (string | null)[]`
+
+- **`src/app/(dashboard)/dashboard/landing-pages/page.tsx`** — loading messages overhaul
+  - New 5-step language-aware messages: `FUNNEL_LOADING_MESSAGES_FR` and `FUNNEL_LOADING_MESSAGES_AR`
+  - Messages reference image analysis + AI generation steps
+  - Rotation interval increased from 2s → 5s (matches ~20–30s total generation time with fal.ai)
+
+**Environment variable added:**
+  - `FAL_API_KEY` — documented in env vars section above
+
+**Error handling:**
+  - If `FAL_API_KEY` not set → logs warning, skips variants, funnel generates with original image only
+  - If any fal.ai variant fails → that slot is `null`, others continue
+  - If all variants fail → funnel generates with original image only (graceful degradation)
+  - fal.ai failures never surface as user-visible errors
+
+**TypeScript:** `npx tsc --noEmit` passes with 0 errors
 
 ### 2026-05-04 — Sales Funnel Generator (Algerian dropshipping market)
 

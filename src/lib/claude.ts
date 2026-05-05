@@ -13,7 +13,7 @@ export function getGenAI(): GoogleGenerativeAI {
 
 type GeminiPart = { text: string } | { inlineData: { data: string; mimeType: string } };
 
-// Try gemini-2.5-flash first; fall back to gemini-1.5-flash on 403/access-denied errors.
+// Try gemini-2.5-flash first; fall back to gemini-1.5-flash on 403/503/access-denied/high-demand errors.
 export async function generateContentWithFallback(
   contentParts: GeminiPart[],
   generationConfig?: { maxOutputTokens?: number; temperature?: number }
@@ -40,12 +40,16 @@ export async function generateContentWithFallback(
       return result.response.text();
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      // Only fall back for access/quota/permission errors
+      // Fall back for access/quota/availability errors (403, 503, high demand, overloaded)
       if (
         msg.includes("403") ||
+        msg.includes("503") ||
         msg.toLowerCase().includes("denied") ||
         msg.toLowerCase().includes("permission") ||
-        msg.toLowerCase().includes("quota")
+        msg.toLowerCase().includes("quota") ||
+        msg.toLowerCase().includes("unavailable") ||
+        msg.toLowerCase().includes("high demand") ||
+        msg.toLowerCase().includes("overloaded")
       ) {
         lastError = err;
         continue;

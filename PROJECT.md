@@ -313,7 +313,7 @@ npm run dev
 
 ## Build Status
 
-`npm run build` — passes cleanly (34 routes). Latest production deployment: `dpl_E3YnPUUrYnauDiXBCumGgyyWuFYQ (Funnel Generator V2 — fal.ai + white bg) — **https://flowd-nine.vercel.app** / **https://flowd.store****
+`npm run build` — passes cleanly (34 routes). Latest production deployment: `dpl_E3YnPUUrYnauDiXBCumGgyyWuFYQ` (Funnel Generator V2 — fal.ai + white bg) — **https://flowd-nine.vercel.app** / **https://flowd.store**
 
 ---
 
@@ -346,6 +346,12 @@ Flowd uses a **single, unified design system** based on CSS custom properties. T
 ---
 
 ## Changelog
+
+### 2026-05-05 — Gemini fallback: replace deprecated gemini-2.0-flash with gemini-2.5-flash-lite
+
+- **`src/lib/claude.ts`** — changed fallback model from `gemini-2.0-flash` (deprecated, shuts down June 1 2026) to `gemini-2.5-flash-lite` (stable, v1beta, $0.10/1M input · $0.40/1M output)
+- Also added 503/unavailable/high-demand/overloaded to the fallback error conditions (only 403/quota were previously covered)
+- Simplified: both candidates now always use explicit `apiVersion: "v1beta"` — no more conditional apiVersion branch
 
 ### 2026-05-05 — Funnel Generator V2: white background + fal.ai image generation + 3-field form
 

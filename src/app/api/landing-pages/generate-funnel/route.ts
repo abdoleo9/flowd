@@ -84,13 +84,12 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Generate fal.ai variant images in parallel (non-blocking)
+  // Generate fal.ai variant images using the CDN URL (fal.ai requires HTTP/HTTPS, not data: URLs)
   let variantImages: (string | null)[] = [null, null, null];
-  if (image_base64 && image_mime_type) {
+  if (image_url) {
     try {
       variantImages = await generateFunnelProductImages(
-        image_base64 as string,
-        image_mime_type as string,
+        image_url,
         product_name as string,
         product_category as string
       );

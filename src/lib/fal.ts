@@ -13,15 +13,14 @@ export interface FalImageResult {
   height: number
 }
 
+// imageUrl must be a public HTTP/HTTPS URL — fal.ai does not accept data: URLs
 export async function generateProductImageVariant(
-  imageBase64: string,
-  imageMimeType: string,
+  imageUrl: string,
   stylePrompt: string,
   strength: number = 0.75
 ): Promise<FalImageResult | null> {
   try {
     const key = getFalKey()
-    const imageDataUrl = `data:${imageMimeType};base64,${imageBase64}`
 
     const submitRes = await fetch(FAL_API_URL, {
       method: 'POST',
@@ -30,7 +29,7 @@ export async function generateProductImageVariant(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        image_url: imageDataUrl,
+        image_url: imageUrl,
         prompt: stylePrompt,
         strength,
         num_images: 1,
@@ -91,13 +90,12 @@ export async function generateProductImageVariant(
   }
 }
 
-// Generate 3 product image variants in parallel:
+// Generate 3 product image variants in parallel using the Supabase CDN URL.
 // 0 = clean white background studio shot
 // 1 = lifestyle / in-use scene
 // 2 = macro detail / feature highlight
 export async function generateFunnelProductImages(
-  imageBase64: string,
-  imageMimeType: string,
+  imageUrl: string,
   productName: string,
   productCategory: string
 ): Promise<(string | null)[]> {
@@ -109,12 +107,7 @@ export async function generateFunnelProductImages(
 
   const results = await Promise.allSettled(
     prompts.map((prompt, i) =>
-      generateProductImageVariant(
-        imageBase64,
-        imageMimeType,
-        prompt,
-        i === 0 ? 0.65 : 0.80
-      )
+      generateProductImageVariant(imageUrl, prompt, i === 0 ? 0.65 : 0.80)
     )
   )
 

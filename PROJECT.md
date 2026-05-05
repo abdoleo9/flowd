@@ -347,6 +347,12 @@ Flowd uses a **single, unified design system** based on CSS custom properties. T
 
 ## Changelog
 
+### 2026-05-05 — Fix fal.ai image generation: pass CDN URL instead of base64 data URL
+
+- **`src/lib/fal.ts`** — `generateProductImageVariant` now accepts a public HTTP/HTTPS URL instead of base64+mimeType. fal.ai's API rejects `data:` URLs, so variant images were silently always null before this fix.
+- **`src/lib/fal.ts`** — `generateFunnelProductImages` signature simplified: `(imageUrl, productName, productCategory)` — removed base64/mimeType params.
+- **`src/app/api/landing-pages/generate-funnel/route.ts`** — fal.ai call now uses the Supabase CDN public URL (`image_url`) instead of base64. Only runs if image upload to CDN succeeded.
+
 ### 2026-05-05 — Gemini fallback: replace deprecated gemini-2.0-flash with gemini-2.5-flash-lite
 
 - **`src/lib/claude.ts`** — changed fallback model from `gemini-2.0-flash` (deprecated, shuts down June 1 2026) to `gemini-2.5-flash-lite` (stable, v1beta, $0.10/1M input · $0.40/1M output)
